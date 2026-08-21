@@ -1,0 +1,188 @@
+{
+  "id": "homeassistant-agent-interface",
+  "name": "Home Assistant Agent Interface",
+  "description": "Secure, compact Home Assistant context shaped for agent decisions.",
+  "version": "0.1.0",
+  "configSchema": {
+    "type": "object",
+    "required": [
+      "baseUrl",
+      "token"
+    ],
+    "properties": {
+      "baseUrl": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Home Assistant base URL."
+      },
+      "token": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Home Assistant access token or SecretRef."
+      },
+      "briefEntities": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 255,
+          "pattern": "^[a-z0-9_]+\\.[a-z0-9_]+$"
+        },
+        "maxItems": 25,
+        "uniqueItems": true,
+        "description": "Entity IDs used when home_assistant_brief receives no targets."
+      },
+      "presenceEntities": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 255,
+          "pattern": "^[a-z0-9_]+\\.[a-z0-9_]+$"
+        },
+        "maxItems": 25,
+        "uniqueItems": true,
+        "description": "Presence entity IDs used when home_assistant_presence receives no targets."
+      },
+      "allowedEntities": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 255,
+          "pattern": "^[a-z0-9_]+\\.[a-z0-9_]+$"
+        },
+        "maxItems": 500,
+        "uniqueItems": true,
+        "description": "Optional exact entity allowlist."
+      },
+      "allowedDomains": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]+$"
+        },
+        "maxItems": 100,
+        "uniqueItems": true,
+        "description": "Optional entity-domain allowlist."
+      },
+      "requestTimeoutMs": {
+        "type": "integer",
+        "minimum": 1000,
+        "maximum": 60000
+      },
+      "maxResponseBytes": {
+        "type": "integer",
+        "minimum": 65536,
+        "maximum": 16777216
+      },
+      "maxBriefItems": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 50
+      },
+      "recentChangeMinutes": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 1440
+      },
+      "defaultHistoryHours": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 720
+      },
+      "maxHistoryHours": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 720
+      }
+    },
+    "additionalProperties": false
+  },
+  "activation": {
+    "onStartup": false
+  },
+  "configContracts": {
+    "secretInputs": {
+      "paths": [
+        {
+          "path": "token",
+          "expected": "string"
+        }
+      ]
+    }
+  },
+  "contracts": {
+    "tools": [
+      "home_assistant_brief",
+      "home_assistant_find",
+      "home_assistant_inspect",
+      "home_assistant_presence",
+      "home_assistant_diagnose"
+    ]
+  },
+  "toolMetadata": {
+    "home_assistant_brief": {
+      "replaySafe": true,
+      "configSignals": [
+        {
+          "rootPath": "plugins.entries.homeassistant-agent-interface.config",
+          "required": [
+            "baseUrl",
+            "token"
+          ]
+        }
+      ]
+    },
+    "home_assistant_find": {
+      "replaySafe": true,
+      "configSignals": [
+        {
+          "rootPath": "plugins.entries.homeassistant-agent-interface.config",
+          "required": [
+            "baseUrl",
+            "token"
+          ]
+        }
+      ]
+    },
+    "home_assistant_inspect": {
+      "replaySafe": true,
+      "configSignals": [
+        {
+          "rootPath": "plugins.entries.homeassistant-agent-interface.config",
+          "required": [
+            "baseUrl",
+            "token"
+          ]
+        }
+      ]
+    },
+    "home_assistant_presence": {
+      "replaySafe": true,
+      "configSignals": [
+        {
+          "rootPath": "plugins.entries.homeassistant-agent-interface.config",
+          "required": [
+            "baseUrl",
+            "token"
+          ]
+        }
+      ],
+      "optional": true
+    },
+    "home_assistant_diagnose": {
+      "optional": true,
+      "replaySafe": true,
+      "configSignals": [
+        {
+          "rootPath": "plugins.entries.homeassistant-agent-interface.config",
+          "required": [
+            "baseUrl",
+            "token"
+          ]
+        }
+      ]
+    }
+  }
+}

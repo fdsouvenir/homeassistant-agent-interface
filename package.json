@@ -1,0 +1,96 @@
+{
+  "name": "homeassistant-agent-interface",
+  "version": "0.1.0",
+  "description": "A secure, token-efficient Home Assistant interface for OpenClaw agents.",
+  "keywords": [
+    "openclaw",
+    "home-assistant",
+    "home-automation",
+    "agent-tools",
+    "clawhub",
+    "axi"
+  ],
+  "homepage": "https://github.com/fdsouvenir/homeassistant-agent-interface#readme",
+  "bugs": {
+    "url": "https://github.com/fdsouvenir/homeassistant-agent-interface/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fdsouvenir/homeassistant-agent-interface.git"
+  },
+  "license": "MIT",
+  "author": "fdsouvenir",
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "assets/banner.svg",
+    "openclaw.plugin.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=22.22.3"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "node ./scripts/clean.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "plugin:build": "npm run build && node ./scripts/openclaw-isolated.mjs plugins build --entry ./dist/index.js",
+    "plugin:check": "npm run build && node ./scripts/openclaw-isolated.mjs plugins build --entry ./dist/index.js --check",
+    "plugin:validate": "npm run build && node ./scripts/openclaw-isolated.mjs plugins validate --entry ./dist/index.js",
+    "clawhub:validate": "clawhub package validate . --out .clawhub-validation",
+    "check:privacy": "node ./scripts/check-privacy.mjs",
+    "check": "npm run format:check && npm run check:privacy && npm run plugin:check && npm test",
+    "test": "vitest run --config ./vitest.config.ts",
+    "test:watch": "vitest --config ./vitest.config.ts"
+  },
+  "dependencies": {
+    "typebox": "^1.1.38"
+  },
+  "peerDependencies": {
+    "openclaw": ">=2026.8.1-beta.2"
+  },
+  "peerDependenciesMeta": {
+    "openclaw": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "clawhub": "^0.23.3",
+    "openclaw": "2026.8.1-beta.2",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  },
+  "openclaw": {
+    "extensions": [
+      "./dist/index.js"
+    ],
+    "install": {
+      "clawhubSpec": "clawhub:homeassistant-agent-interface",
+      "defaultChoice": "clawhub",
+      "minHostVersion": ">=2026.8.1-beta.2"
+    },
+    "compat": {
+      "pluginApi": ">=2026.8.1-beta.2"
+    },
+    "build": {
+      "openclawVersion": "2026.8.1-beta.2",
+      "pluginSdkVersion": "2026.8.1-beta.2"
+    },
+    "release": {
+      "publishToClawHub": true
+    }
+  }
+}
