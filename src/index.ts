@@ -27,7 +27,7 @@ export default defineToolPlugin({
   id: "homeassistant-agent-interface",
   name: "Home Assistant Agent Interface",
   description:
-    "Compact Home Assistant discovery, context, history, and action execution for agents.",
+    "Six compact tools replace raw Home Assistant state dumps and repeated API calls for agents.",
   activation: { onStartup: false },
   configSchema,
   tools: (tool) => [

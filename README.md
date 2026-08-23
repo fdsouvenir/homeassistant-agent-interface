@@ -9,7 +9,14 @@
   <img alt="Version 0.3 agent-guided control" src="https://img.shields.io/badge/v0.3-agent--guided%20control-38bdf8.svg" />
 </p>
 
-A token-efficient Home Assistant interface for OpenClaw agents. It gives an agent compact, typed tools to discover the actual installation, understand current state and history, and execute any Home Assistant action available to the configured token.
+Six compact tools replace raw Home Assistant state dumps and repeated API calls. They let an OpenClaw agent discover the actual installation, understand current state and history, and execute any Home Assistant action available to the configured token.
+
+## What you can ask
+
+- “What lights are on?”
+- “Set the kitchen lights to 60%.”
+- “Where is everyone?”
+- “Find unavailable devices.”
 
 The design follows [Agent eXperience Interface (AXI)](https://github.com/kunchenguid/axi) principles: semantic lookup, progressive detail, batched work, bounded results, explicit partial coverage, definitive empty results, and errors that help the agent correct its next call.
 

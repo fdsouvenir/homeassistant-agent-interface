@@ -22,6 +22,8 @@ The package is structured for GitHub and ClawHub distribution. GitHub releases a
      --source-commit <commit> \
      --source-ref v<version> \
      --tags latest \
+     --categories tools \
+     --topics home-assistant,home-automation,agent-tools,axi \
      --dry-run
    ```
 
