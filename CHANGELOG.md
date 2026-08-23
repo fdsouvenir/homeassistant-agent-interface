@@ -4,6 +4,19 @@ All notable changes will be documented here. This project follows [Semantic Vers
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-08-23
+
+### Added
+
+- A bundled `home-assistant-interface` skill that teaches agents efficient discovery, direct action execution, progressive inspection, and precise result interpretation.
+- Package tests that ensure the operating skill is declared and included in the published artifact.
+
+### Changed
+
+- Public documentation now leads with the reviewed ClawHub install path, states exact OpenClaw and Node.js requirements, and documents first-change observation behavior for multi-entity targets.
+- ClawHub publishing now uses the exact tested npm tarball with tagged-source provenance.
+- Node.js engine metadata now matches the runtimes supported by OpenClaw 8.1.
+
 ## [0.2.1] - 2026-08-23
 
 ### Added
@@ -45,7 +58,8 @@ All notable changes will be documented here. This project follows [Semantic Vers
 - SecretRef declaration, configured-origin binding, redirect blocking, timeouts, byte caps, and optional exposure scopes.
 - Neutral tests, public documentation, CI, and ClawHub package metadata.
 
-[Unreleased]: https://github.com/fdsouvenir/homeassistant-agent-interface/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/fdsouvenir/homeassistant-agent-interface/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/fdsouvenir/homeassistant-agent-interface/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/fdsouvenir/homeassistant-agent-interface/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/fdsouvenir/homeassistant-agent-interface/compare/6ab0c49...v0.2.0
 [0.1.0]: https://github.com/fdsouvenir/homeassistant-agent-interface/commit/6ab0c49
