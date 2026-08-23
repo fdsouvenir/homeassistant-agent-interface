@@ -1,6 +1,6 @@
 {
   "name": "homeassistant-agent-interface",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Six compact tools replace raw Home Assistant state dumps and repeated API calls for OpenClaw agents.",
   "keywords": [
     "openclaw",

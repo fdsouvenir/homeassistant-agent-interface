@@ -4,6 +4,14 @@ All notable changes will be documented here. This project follows [Semantic Vers
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-08-23
+
+### Changed
+
+- Public copy now leads with the six-tool, token-efficiency differentiator and concrete requests that users can hand to their agent.
+- ClawHub publication metadata now places the plugin in the `Tools` category instead of `Other`.
+- GitHub installation documentation now points to the `v0.3.1` release tag.
+
 ## [0.3.0] - 2026-08-23
 
 ### Added
@@ -58,7 +66,8 @@ All notable changes will be documented here. This project follows [Semantic Vers
 - SecretRef declaration, configured-origin binding, redirect blocking, timeouts, byte caps, and optional exposure scopes.
 - Neutral tests, public documentation, CI, and ClawHub package metadata.
 
-[Unreleased]: https://github.com/fdsouvenir/homeassistant-agent-interface/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/fdsouvenir/homeassistant-agent-interface/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/fdsouvenir/homeassistant-agent-interface/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/fdsouvenir/homeassistant-agent-interface/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/fdsouvenir/homeassistant-agent-interface/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/fdsouvenir/homeassistant-agent-interface/compare/6ab0c49...v0.2.0

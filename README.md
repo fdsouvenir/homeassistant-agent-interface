@@ -96,7 +96,7 @@ openclaw plugins install clawhub:homeassistant-agent-interface
 Install the released tag:
 
 ```bash
-openclaw plugins install git:github.com/fdsouvenir/homeassistant-agent-interface@v0.3.0
+openclaw plugins install git:github.com/fdsouvenir/homeassistant-agent-interface@v0.3.1
 ```
 
 For local development:
