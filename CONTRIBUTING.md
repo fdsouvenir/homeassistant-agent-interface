@@ -1,14 +1,16 @@
 # Contributing
 
-Thanks for helping make Home Assistant safer and easier for agents to use.
+Thanks for helping make Home Assistant easier and more efficient for agents to use.
 
 ## Ground rules
 
-- Keep the public tool surface semantic; do not mirror raw REST endpoints.
+- Keep the public tool surface semantic and compact; do not mirror raw endpoint responses.
 - Do not add people, device, entity, zone, host, or token defaults.
-- Never return raw state attributes, configuration, logs, or response bodies.
+- Discover entities, actions, areas, devices, floors, labels, and capabilities from Home Assistant instead of hard-coding integration catalogs.
+- Keep authorization in Home Assistant. Do not add plugin-maintained action/entity allowlists or approval categories.
+- Expose integration-specific data through explicit progressive disclosure rather than default attribute dumps.
 - Preserve bounded collections, strict schemas, stable errors, and definitive empty results.
-- Mutating tools require a separate design and security review.
+- Keep action execution general and report compact observations without assuming every action is idempotent.
 - Use neutral fixture identities such as `person.example`.
 
 ## Development
@@ -21,4 +23,4 @@ npm test
 npm run check
 ```
 
-Please add tests for behavior and output-schema compatibility. Pull requests should explain the agent workflow improved, its token/round-trip impact, and any change to the security boundary.
+Please add tests for behavior and output-schema compatibility. Pull requests should explain the agent workflow improved and its token/round-trip impact.

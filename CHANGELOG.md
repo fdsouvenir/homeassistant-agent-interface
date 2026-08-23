@@ -4,6 +4,24 @@ All notable changes will be documented here. This project follows [Semantic Vers
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-23
+
+### Added
+
+- Live discovery of Home Assistant actions, areas, devices, floors, labels, and enriched entities through one bounded search tool.
+- General `home_assistant_execute` action calls with native entity, device, area, floor, and label targets.
+- Compact before/after entity observation, missing-target reporting, Home Assistant context IDs, and optional action response data.
+- Exact attribute selection for `home_assistant_inspect`.
+- WebSocket authentication, batching, timeouts, abort propagation, response caps, and stable command errors.
+
+### Changed
+
+- Home Assistant token permissions are now the sole read/action authority; plugin-maintained entity and domain allowlists were removed.
+- All six tools are available as the plugin's core interface rather than hiding presence and diagnostics as optional tools.
+- Discovery reports partial source coverage explicitly and no longer treats an unavailable registry as an empty result.
+- Invalid state and history timestamps now produce an upstream-data error instead of appearing freshly changed.
+- Test coverage expanded from 10 to 32 tests, including adversarial transport, ambiguity, partial failure, dynamic discovery, and mutation cases.
+
 ## [0.1.0] - 2026-08-21
 
 ### Added
@@ -14,5 +32,6 @@ All notable changes will be documented here. This project follows [Semantic Vers
 - SecretRef declaration, configured-origin binding, redirect blocking, timeouts, byte caps, and optional exposure scopes.
 - Neutral tests, public documentation, CI, and ClawHub package metadata.
 
-[Unreleased]: https://github.com/fdsouvenir/homeassistant-agent-interface/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/fdsouvenir/homeassistant-agent-interface/releases/tag/v0.1.0
+[Unreleased]: https://github.com/fdsouvenir/homeassistant-agent-interface/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/fdsouvenir/homeassistant-agent-interface/compare/6ab0c49...v0.2.0
+[0.1.0]: https://github.com/fdsouvenir/homeassistant-agent-interface/commit/6ab0c49

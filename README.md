@@ -6,49 +6,70 @@
   <a href="https://github.com/fdsouvenir/homeassistant-agent-interface/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/fdsouvenir/homeassistant-agent-interface/actions/workflows/ci.yml/badge.svg" /></a>
   <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-36d399.svg" /></a>
   <a href="https://docs.openclaw.ai/plugins/tool-plugins"><img alt="OpenClaw 8.1 tool plugin" src="https://img.shields.io/badge/OpenClaw-8.1-7c3aed.svg" /></a>
-  <img alt="Read only" src="https://img.shields.io/badge/v0.1-read--only-38bdf8.svg" />
+  <img alt="Version 0.2 read and control" src="https://img.shields.io/badge/v0.2-read%20%2B%20control-38bdf8.svg" />
 </p>
 
-A secure, token-efficient Home Assistant interface for OpenClaw agents. It exposes household meaning—not Home Assistant's raw REST surface—through typed, bounded tools designed around [Agent eXperience Interface (AXI)](https://github.com/kunchenguid/axi) principles.
+A token-efficient Home Assistant interface for OpenClaw agents. It gives an agent compact, typed tools to discover the actual installation, understand current state and history, and execute any Home Assistant action available to the configured token.
 
-> [!IMPORTANT]
-> Version 0.1 is intentionally read-only. It cannot call services, run automations, modify state, render templates, or retrieve raw logs.
+The design follows [Agent eXperience Interface (AXI)](https://github.com/kunchenguid/axi) principles: semantic lookup, progressive detail, batched work, bounded results, explicit partial coverage, definitive empty results, and errors that help the agent correct its next call.
 
-## Why this exists
+## What v0.2 changes
 
-Typical Home Assistant tools mirror API endpoints: dump every state, expose arbitrary service calls, and make the model assemble meaning across repeated requests. That creates large prompts and a broad security boundary.
+Version 0.2 adds full action execution and live installation discovery.
 
-This plugin takes a narrower approach:
+- `home_assistant_find` searches entities, actions, areas, devices, floors, and labels from Home Assistant itself.
+- `home_assistant_execute` calls any `domain.action` with native Home Assistant target and data objects.
+- Entity, device, area, floor, and label targets are supported without a plugin-maintained catalog.
+- Action results include compact before/after observations when target entities can be resolved.
+- Exact dynamic attributes can be requested through `home_assistant_inspect` only when needed.
+- The plugin has no entity allowlist, action allowlist, approval system, or hard-coded household identities.
 
-- semantic operations instead of endpoint wrappers;
-- compact defaults with explicit detail levels;
-- batched inspection and precomputed aggregates;
-- definitive empty results and stable structured errors;
-- hard response, history, item, and time limits;
-- SecretRef-aware token configuration;
-- no raw configuration, logs, coordinates, or attribute dumps;
-- no hard-coded people, devices, entities, zones, or homes.
+Home Assistant remains the source of truth for authorization. The plugin attempts the requested operation and Home Assistant permits or rejects it according to the configured user and token.
 
 ## Tools
 
-| Tool                      | What it answers                                                              | Default behavior                                                                 |
-| ------------------------- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| `home_assistant_brief`    | What matters across a chosen household scope right now?                      | States, attention items, presence, and recent changes in one bounded response    |
-| `home_assistant_find`     | Which entity does this name or partial reference mean?                       | Ranked canonical IDs with pagination and a definitive empty result               |
-| `home_assistant_inspect`  | What is the useful state of these targets?                                   | Up to 25 type-aware projections; `summary`, `detail`, or safe `full`             |
-| `home_assistant_presence` | Where are configured or explicit presence targets, and how did zones change? | Optional tool; current zone plus transitions and time-by-zone, never coordinates |
-| `home_assistant_diagnose` | Is the integration healthy?                                                  | Optional tool; connectivity and scoped entity health without raw logs            |
+| Tool                      | Purpose                                                                                                                                    |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `home_assistant_find`     | Search the live catalog across entities, actions, areas, devices, floors, and labels. Supports kind/domain/state filters and pagination.   |
+| `home_assistant_execute`  | Execute any Home Assistant action with native targets and data, then return a compact outcome and before/after observation where possible. |
+| `home_assistant_inspect`  | Resolve and inspect up to 25 entities in one call. Uses semantic projections and can include exact requested attributes.                   |
+| `home_assistant_brief`    | Summarize current state, attention items, presence, and recent changes across explicit or configured entities.                             |
+| `home_assistant_presence` | Summarize current zones, transitions, and time-by-zone over a bounded history window.                                                      |
+| `home_assistant_diagnose` | Check connectivity and summarize instance and entity health.                                                                               |
 
-`full` means the fullest **safe semantic projection** known by the plugin. It never means “return every Home Assistant attribute.”
+### Typical agent flow
+
+Discover what the installation calls a light and which actions it offers:
+
+```json
+{
+  "query": "kitchen",
+  "kinds": ["entity", "area", "action"],
+  "domains": ["light"],
+  "limit": 10
+}
+```
+
+Turn on every compatible light in an area:
+
+```json
+{
+  "action": "light.turn_on",
+  "target": { "area_id": ["kitchen"] },
+  "data": { "brightness_pct": 60 }
+}
+```
+
+The execution result includes Home Assistant's context ID plus bounded state observations for resolved target entities. Actions that do not target entities—notifications, conversations, some scripts, and similar operations—return `observation.status: "not_applicable"`. If observation reads fail but Home Assistant accepts the action, the successful action is preserved and observation is reported as unavailable.
 
 ## Install
 
-### From GitHub while the ClawHub release is pending
+### From GitHub
 
-Review the repository, then install the development branch (or replace `main` with a commit you trust):
+Install the released tag:
 
 ```bash
-openclaw plugins install git:github.com/fdsouvenir/homeassistant-agent-interface@main
+openclaw plugins install git:github.com/fdsouvenir/homeassistant-agent-interface@v0.2.0
 ```
 
 For local development:
@@ -63,7 +84,7 @@ openclaw plugins install -l .
 
 ### From ClawHub
 
-Once the first release clears ClawHub review:
+ClawHub publishing is a separate release step. Once a reviewed package is available:
 
 ```bash
 openclaw plugins install clawhub:homeassistant-agent-interface
@@ -71,9 +92,7 @@ openclaw plugins install clawhub:homeassistant-agent-interface
 
 ## Configure
 
-Create a dedicated Home Assistant user with only the access you are comfortable granting. Generate a long-lived access token from that user's Home Assistant profile.
-
-Prefer an OpenClaw SecretRef so the token is not stored as plaintext in `openclaw.json`:
+Create a Home Assistant long-lived access token for the user whose permissions the agent should have. Prefer an OpenClaw SecretRef so the token does not need to be stored directly in `openclaw.json`.
 
 ```json5
 {
@@ -89,16 +108,12 @@ Prefer an OpenClaw SecretRef so the token is not stored as plaintext in `opencla
             id: "HOME_ASSISTANT_TOKEN",
           },
 
-          // Optional ambient scopes. These are examples, never defaults.
+          // Optional ambient scopes. These examples are not defaults.
           briefEntities: [
             "sensor.example_temperature",
             "binary_sensor.example_door",
           ],
           presenceEntities: ["person.example"],
-
-          // Optional exposure boundary. If both are omitted, all entities are readable.
-          allowedEntities: ["person.example"],
-          allowedDomains: ["sensor", "binary_sensor", "light"],
         },
       },
     },
@@ -112,88 +127,39 @@ Restart or reload the Gateway after configuration, then inspect the runtime:
 openclaw plugins inspect homeassistant-agent-interface --runtime
 ```
 
-`home_assistant_brief` and `home_assistant_presence` accept explicit targets. Their configured entity lists are only used when a call omits targets; the plugin contains no identity-specific fallback.
+The plugin contains no default person, device, area, entity, zone, action, or Home Assistant URL. `briefEntities` and `presenceEntities` are optional operator-defined shortcuts used only when those tools receive no explicit targets.
 
 ### Configuration reference
 
 | Setting               | Required | Purpose                                                                         |
 | --------------------- | -------- | ------------------------------------------------------------------------------- |
-| `baseUrl`             | Yes      | Home Assistant origin or reverse-proxy base path; HTTP and HTTPS are supported  |
-| `token`               | Yes      | Access token; a SecretRef is strongly recommended                               |
-| `briefEntities`       | No       | Default scope for `home_assistant_brief`                                        |
-| `presenceEntities`    | No       | Default scope for `home_assistant_presence`                                     |
-| `allowedEntities`     | No       | Exact entity IDs the plugin may reveal                                          |
-| `allowedDomains`      | No       | Entity domains the plugin may reveal; combined with entities using OR semantics |
-| `requestTimeoutMs`    | No       | Request timeout, 1–60 seconds; default 10 seconds                               |
-| `maxResponseBytes`    | No       | Per-response byte cap, 64 KiB–16 MiB; default 4 MiB                             |
-| `maxBriefItems`       | No       | Maximum rows per briefing/diagnostic bucket; default 12                         |
-| `recentChangeMinutes` | No       | “Recent” briefing window; default 60 minutes                                    |
-| `defaultHistoryHours` | No       | Presence window when the call omits one; default 24 hours                       |
-| `maxHistoryHours`     | No       | Maximum allowed presence window; default 168 hours                              |
+| `baseUrl`             | Yes      | Home Assistant origin or reverse-proxy base path; HTTP and HTTPS are supported. |
+| `token`               | Yes      | Home Assistant access token or OpenClaw SecretRef.                              |
+| `briefEntities`       | No       | Default entity scope for `home_assistant_brief`.                                |
+| `presenceEntities`    | No       | Default entity scope for `home_assistant_presence`.                             |
+| `requestTimeoutMs`    | No       | REST/WebSocket request timeout, 1–60 seconds; default 10 seconds.               |
+| `maxResponseBytes`    | No       | Per-operation inbound response cap, 64 KiB–16 MiB; default 4 MiB.               |
+| `maxBriefItems`       | No       | Maximum rows per briefing/diagnostic bucket; default 12.                        |
+| `recentChangeMinutes` | No       | “Recent” briefing window; default 60 minutes.                                   |
+| `defaultHistoryHours` | No       | Presence window when a call omits one; default 24 hours.                        |
+| `maxHistoryHours`     | No       | Maximum allowed presence window; default 168 hours.                             |
 
-## Output contract
+## Agent-facing contract
 
-Every operation returns typed JSON in `details` and declares an OpenClaw `outputSchema`.
-
-- Success is explicit with `ok: true`.
-- Expected failures return `ok: false` with a stable code, retryability, and focused recovery metadata.
-- Collections include `total`, `returned`, and `truncated` where bounding matters.
-- Empty matches are successful and definitive: `total: 0`, `matches: []`.
-- Ambiguous names return bounded candidate entity IDs instead of guessing.
+- Every tool returns typed JSON and declares an OpenClaw `outputSchema`.
+- Success is explicit with `ok: true`; expected failures use `ok: false` with a stable code and focused recovery metadata.
+- Collections report `total`, `returned`, and `truncated` where bounding matters.
+- Discovery reports `coverage.partial`, `available_kinds`, and `unavailable_kinds`; a failed registry cannot masquerade as an authoritative empty result.
+- Names are never guessed when the best match is ambiguous.
+- `home_assistant_find` batches live service and registry discovery over one authenticated WebSocket session.
+- `home_assistant_execute` uses Home Assistant's native `call_service` command rather than a hard-coded domain switch.
 - Unknown input fields fail schema validation.
 
-Example presence projection:
+## Authority and transport
 
-```json
-{
-  "ok": true,
-  "total": 1,
-  "returned": 1,
-  "people": [
-    {
-      "entity_id": "person.example",
-      "name": "Example person",
-      "current": {
-        "zone": "home",
-        "since": "2026-08-21T16:00:00.000Z"
-      },
-      "window": {
-        "start": "2026-08-21T08:00:00.000Z",
-        "end": "2026-08-21T20:00:00.000Z",
-        "observed": true,
-        "transitions": {
-          "total": 2,
-          "returned": 2,
-          "truncated": false,
-          "items": [
-            {
-              "at": "2026-08-21T10:00:00.000Z",
-              "from": "home",
-              "to": "work"
-            },
-            {
-              "at": "2026-08-21T16:00:00.000Z",
-              "from": "work",
-              "to": "home"
-            }
-          ]
-        },
-        "time_by_zone": [
-          { "zone": "work", "seconds": 21600, "percent": 50 },
-          { "zone": "home", "seconds": 21600, "percent": 50 }
-        ]
-      }
-    }
-  ],
-  "unresolved": []
-}
-```
+This plugin is an interface, not an authorization or household-safety layer. It does not classify actions, request approvals, or restrict entities/actions beyond Home Assistant's own token permissions. If the token can turn on a light, unlock a lock, run a script, or call a custom integration action, the plugin can request it.
 
-## Security model
-
-The access token is powerful even though this plugin is read-only. Read [the security model](docs/SECURITY-MODEL.md) before production use.
-
-Key controls include configured-origin binding, redirects disabled, GET-only transport, abort propagation, timeouts, response byte caps, allowlist filtering, sanitized upstream failures, and deliberate omission of sensitive attributes. The manifest declares `token` as a SecretRef input and all tools as replay-safe. Presence history and diagnostics are optional tools that must be explicitly allowed by tool policy.
+Transport behavior is deliberately disciplined because failures and oversized results are bad agent interfaces: requests use the configured origin and base path, redirects are disabled for REST, cancellation and timeouts propagate, inbound data is capped, upstream shapes are checked, and credentials are never logged. See [the operational model](docs/SECURITY-MODEL.md).
 
 ## Development
 
@@ -208,13 +174,9 @@ npm run check
 npm pack --dry-run
 ```
 
-Authoring commands run with an isolated temporary OpenClaw state directory. They do not read or migrate your normal Gateway configuration.
+Authoring commands use an isolated temporary OpenClaw state directory. They do not read or migrate the normal Gateway configuration.
 
 See [Architecture](docs/ARCHITECTURE.md), [Publishing](docs/PUBLISHING.md), and [Contributing](CONTRIBUTING.md).
-
-## Status and roadmap
-
-This is an early read-only release. Potential control tools will be considered separately and must use outcome-oriented, idempotent operations with explicit approval—not a generic `call_service` escape hatch.
 
 Home Assistant is a trademark of the Open Home Foundation. This community project is not affiliated with or endorsed by the Open Home Foundation or OpenClaw.
 
