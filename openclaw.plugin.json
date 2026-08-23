@@ -92,6 +92,9 @@
   "activation": {
     "onStartup": false
   },
+  "skills": [
+    "./skills"
+  ],
   "configContracts": {
     "secretInputs": {
       "paths": [

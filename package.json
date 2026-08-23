@@ -32,6 +32,7 @@
   },
   "files": [
     "dist",
+    "skills",
     "assets/banner.svg",
     "openclaw.plugin.json",
     "README.md",
