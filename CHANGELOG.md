@@ -4,6 +4,19 @@ All notable changes will be documented here. This project follows [Semantic Vers
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-08-23
+
+### Added
+
+- Bounded post-action observation polling with configurable settle and poll intervals.
+- Early exit when target state changes, plus explicit `changed` and `no_change_observed` outcomes.
+- Observation attempt counts and actual wait durations for evidence-aware agent feedback.
+- Cancellation coverage for active settle windows, bringing the suite to 35 tests.
+
+### Fixed
+
+- Asynchronous physical-device updates no longer appear as immediate no-change observations when they arrive within the settle window.
+
 ## [0.2.0] - 2026-08-23
 
 ### Added
@@ -32,6 +45,7 @@ All notable changes will be documented here. This project follows [Semantic Vers
 - SecretRef declaration, configured-origin binding, redirect blocking, timeouts, byte caps, and optional exposure scopes.
 - Neutral tests, public documentation, CI, and ClawHub package metadata.
 
-[Unreleased]: https://github.com/fdsouvenir/homeassistant-agent-interface/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/fdsouvenir/homeassistant-agent-interface/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/fdsouvenir/homeassistant-agent-interface/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/fdsouvenir/homeassistant-agent-interface/compare/6ab0c49...v0.2.0
 [0.1.0]: https://github.com/fdsouvenir/homeassistant-agent-interface/commit/6ab0c49

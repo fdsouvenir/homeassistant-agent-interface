@@ -11,6 +11,8 @@ export type ExecuteActionParameters = {
   data?: Record<string, unknown>;
   return_response?: boolean;
   observe?: boolean;
+  settle_ms?: number;
+  poll_interval_ms?: number;
 };
 
 type MissingTarget = {
@@ -24,6 +26,9 @@ type ObservationItem = {
   before?: ReturnType<typeof projectState>;
   after?: ReturnType<typeof projectState>;
 };
+
+const DEFAULT_OBSERVATION_SETTLE_MS = 1_500;
+const DEFAULT_OBSERVATION_POLL_MS = 250;
 
 function asRecord(value: unknown): Record<string, unknown> | undefined {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
@@ -92,6 +97,45 @@ function stateChanged(before: HaState | undefined, after: HaState | undefined) {
   );
 }
 
+function anyStateChanged(
+  before: Map<string, HaState>,
+  after: Map<string, HaState>,
+  entityIds: string[],
+) {
+  return entityIds.some((entityId) =>
+    stateChanged(before.get(entityId), after.get(entityId)),
+  );
+}
+
+function wait(ms: number, signal?: AbortSignal): Promise<void> {
+  if (signal?.aborted) {
+    return Promise.reject(
+      new InterfaceError(
+        "REQUEST_ABORTED",
+        "Home Assistant request was cancelled.",
+      ),
+    );
+  }
+  return new Promise((resolve, reject) => {
+    const onAbort = () => {
+      clearTimeout(timeout);
+      signal?.removeEventListener("abort", onAbort);
+      reject(
+        new InterfaceError(
+          "REQUEST_ABORTED",
+          "Home Assistant request was cancelled.",
+        ),
+      );
+    };
+    const timeout = setTimeout(() => {
+      signal?.removeEventListener("abort", onAbort);
+      resolve();
+    }, ms);
+    signal?.addEventListener("abort", onAbort, { once: true });
+    if (signal?.aborted) onAbort();
+  });
+}
+
 async function readObservedStates(
   config: PluginConfig,
   entityIds: string[],
@@ -109,6 +153,38 @@ async function readObservedStates(
   }
 }
 
+async function settleObservation(
+  config: PluginConfig,
+  entityIds: string[],
+  before: Map<string, HaState>,
+  settleMs: number,
+  pollMs: number,
+  signal?: AbortSignal,
+) {
+  const started = Date.now();
+  const deadline = started + settleMs;
+  let attempts = 0;
+  let after: Map<string, HaState> | undefined;
+
+  while (true) {
+    attempts += 1;
+    const current = await readObservedStates(config, entityIds, signal);
+    if (current !== undefined) {
+      after = current;
+      if (anyStateChanged(before, current, entityIds)) break;
+    }
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) break;
+    await wait(Math.min(pollMs, remaining), signal);
+  }
+
+  return {
+    after,
+    attempts,
+    waitedMs: Math.max(0, Date.now() - started),
+  };
+}
+
 export async function executeAction(
   params: ExecuteActionParameters,
   config: PluginConfig,
@@ -119,6 +195,14 @@ export async function executeAction(
   const target = params.target;
   const shouldObserve = params.observe !== false;
   const socketClient = new HomeAssistantWebSocketClient(config);
+  const settleMs =
+    params.settle_ms ??
+    config.observationSettleMs ??
+    DEFAULT_OBSERVATION_SETTLE_MS;
+  const pollMs =
+    params.poll_interval_ms ??
+    config.observationPollMs ??
+    DEFAULT_OBSERVATION_POLL_MS;
   let entityIds = shouldObserve ? unique(target?.entity_id ?? []) : [];
   let missing: MissingTarget[] = [];
   let resolutionAvailable = true;
@@ -164,10 +248,18 @@ export async function executeAction(
     },
     signal,
   );
-  const after =
-    before === undefined
-      ? undefined
-      : await readObservedStates(config, entityIds, signal);
+  const settled =
+    before === undefined || entityIds.length === 0
+      ? { after: undefined, attempts: 0, waitedMs: 0 }
+      : await settleObservation(
+          config,
+          entityIds,
+          before,
+          settleMs,
+          pollMs,
+          signal,
+        );
+  const after = settled.after;
 
   const resultRecord = asRecord(result);
   const contextRecord = asRecord(resultRecord?.context);
@@ -192,6 +284,12 @@ export async function executeAction(
       : resolutionAvailable && before !== undefined && after !== undefined
         ? "observed"
         : "unavailable";
+  const observationOutcome =
+    observationStatus === "observed"
+      ? observationItems.some((item) => item.changed)
+        ? ("changed" as const)
+        : ("no_change_observed" as const)
+      : undefined;
   const response = compactJson(resultRecord?.response);
 
   return {
@@ -208,6 +306,10 @@ export async function executeAction(
       : {}),
     observation: {
       status: observationStatus,
+      ...(observationOutcome ? { outcome: observationOutcome } : {}),
+      settle_ms: settleMs,
+      waited_ms: settled.waitedMs,
+      attempts: settled.attempts,
       total: entityIds.length,
       returned: selectedItems.length,
       truncated: selectedItems.length < observationItems.length,

@@ -13,7 +13,7 @@ A token-efficient Home Assistant interface for OpenClaw agents. It gives an agen
 
 The design follows [Agent eXperience Interface (AXI)](https://github.com/kunchenguid/axi) principles: semantic lookup, progressive detail, batched work, bounded results, explicit partial coverage, definitive empty results, and errors that help the agent correct its next call.
 
-## What v0.2 changes
+## What v0.2 provides
 
 Version 0.2 adds full action execution and live installation discovery.
 
@@ -21,6 +21,7 @@ Version 0.2 adds full action execution and live installation discovery.
 - `home_assistant_execute` calls any `domain.action` with native Home Assistant target and data objects.
 - Entity, device, area, floor, and label targets are supported without a plugin-maintained catalog.
 - Action results include compact before/after observations when target entities can be resolved.
+- Observation reads settle asynchronously: they stop as soon as a change appears or report that no change was observed within the bounded window.
 - Exact dynamic attributes can be requested through `home_assistant_inspect` only when needed.
 - The plugin has no entity allowlist, action allowlist, approval system, or hard-coded household identities.
 
@@ -60,7 +61,9 @@ Turn on every compatible light in an area:
 }
 ```
 
-The execution result includes Home Assistant's context ID plus bounded state observations for resolved target entities. Actions that do not target entities—notifications, conversations, some scripts, and similar operations—return `observation.status: "not_applicable"`. If observation reads fail but Home Assistant accepts the action, the successful action is preserved and observation is reported as unavailable.
+The execution result includes Home Assistant's context ID plus bounded state observations for resolved target entities. The first post-action read happens immediately. If no change is visible, the plugin polls until a change appears or the settle deadline expires. `observation.outcome` distinguishes `changed` from `no_change_observed`, while `attempts` and `waited_ms` make the evidence explicit. A no-change observation does not redefine Home Assistant's successful action response.
+
+Actions that do not target entities—notifications, conversations, some scripts, and similar operations—return `observation.status: "not_applicable"`. If observation reads fail but Home Assistant accepts the action, the successful action is preserved and observation is reported as unavailable. Per-call `settle_ms` and `poll_interval_ms` values override the configured defaults; setting `settle_ms` to `0` restores a single immediate read.
 
 ## Install
 
@@ -69,7 +72,7 @@ The execution result includes Home Assistant's context ID plus bounded state obs
 Install the released tag:
 
 ```bash
-openclaw plugins install git:github.com/fdsouvenir/homeassistant-agent-interface@v0.2.0
+openclaw plugins install git:github.com/fdsouvenir/homeassistant-agent-interface@v0.2.1
 ```
 
 For local development:
@@ -143,6 +146,8 @@ The plugin contains no default person, device, area, entity, zone, action, or Ho
 | `recentChangeMinutes` | No       | “Recent” briefing window; default 60 minutes.                                   |
 | `defaultHistoryHours` | No       | Presence window when a call omits one; default 24 hours.                        |
 | `maxHistoryHours`     | No       | Maximum allowed presence window; default 168 hours.                             |
+| `observationSettleMs` | No       | Default post-action settle deadline, 0–10 seconds; default 1500 ms.             |
+| `observationPollMs`   | No       | Default delay between observation reads, 100–2000 ms; default 250 ms.           |
 
 ## Agent-facing contract
 
@@ -152,7 +157,7 @@ The plugin contains no default person, device, area, entity, zone, action, or Ho
 - Discovery reports `coverage.partial`, `available_kinds`, and `unavailable_kinds`; a failed registry cannot masquerade as an authoritative empty result.
 - Names are never guessed when the best match is ambiguous.
 - `home_assistant_find` batches live service and registry discovery over one authenticated WebSocket session.
-- `home_assistant_execute` uses Home Assistant's native `call_service` command rather than a hard-coded domain switch.
+- `home_assistant_execute` uses Home Assistant's native `call_service` command rather than a hard-coded domain switch, then performs bounded early-exit observation polling.
 - Unknown input fields fail schema validation.
 
 ## Authority and transport

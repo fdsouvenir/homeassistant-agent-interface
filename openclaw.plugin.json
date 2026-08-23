@@ -73,6 +73,18 @@
         "type": "integer",
         "minimum": 1,
         "maximum": 720
+      },
+      "observationSettleMs": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 10000,
+        "description": "Default post-action observation settle window in milliseconds. Defaults to 1500."
+      },
+      "observationPollMs": {
+        "type": "integer",
+        "minimum": 100,
+        "maximum": 2000,
+        "description": "Default interval between post-action observation reads in milliseconds. Defaults to 250."
       }
     },
     "additionalProperties": false

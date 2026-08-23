@@ -53,7 +53,7 @@ export default defineToolPlugin({
       name: "home_assistant_execute",
       label: "Execute Home Assistant Action",
       description:
-        "Execute any Home Assistant action available to the configured token. Discover action names and fields with home_assistant_find, pass native Home Assistant targets and data, and receive a compact before/after observation when target entities can be resolved.",
+        "Execute any Home Assistant action available to the configured token. Discover action names and fields with home_assistant_find, pass native Home Assistant targets and data, and receive a compact settled before/after observation when target entities can be resolved.",
       parameters: executeParameters,
       outputSchema: executeOutputSchema,
       execute: (params, config, context) => runExecute(params, config, context),

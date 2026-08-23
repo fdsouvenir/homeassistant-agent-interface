@@ -37,7 +37,7 @@ Discovery and inspection expose data available to the token through compact proj
 
 - Home Assistant service discovery can describe an action that the current user is not permitted to call; the action call remains authoritative.
 - Some registry commands may be unavailable to a non-admin token or an older Home Assistant version. Discovery reports those kinds as unavailable rather than empty.
-- A successful action can have delayed or external effects that are not represented by an immediate entity-state change.
+- A successful action can have delayed or external effects that are not represented even within the configured observation settle window.
 - Observation is best-effort. A failed post-action read does not mean the action failed.
 - HTTP provides no transport confidentiality. Use HTTPS or an appropriately protected network when that matters to the deployment.
 - SecretRefs reduce plaintext configuration persistence but do not create process isolation.

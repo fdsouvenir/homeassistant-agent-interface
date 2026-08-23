@@ -11,6 +11,8 @@ export type PluginConfig = {
   recentChangeMinutes?: number;
   defaultHistoryHours?: number;
   maxHistoryHours?: number;
+  observationSettleMs?: number;
+  observationPollMs?: number;
 };
 
 export type HaAttributes = Record<string, unknown>;

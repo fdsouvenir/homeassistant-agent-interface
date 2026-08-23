@@ -489,6 +489,8 @@ describe("AXI-shaped operations", () => {
       context_id: "context-123",
       observation: {
         status: "observed",
+        outcome: "changed",
+        attempts: 1,
         total: 1,
         changed: 1,
         items: [
@@ -500,6 +502,126 @@ describe("AXI-shaped operations", () => {
           },
         ],
       },
+    });
+    expect(Value.Check(executeOutputSchema, result)).toBe(true);
+  });
+
+  it("polls until an asynchronous device state change is visible", async () => {
+    let reads = 0;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        reads += 1;
+        return json([
+          state(
+            "light.delayed",
+            reads < 3 ? "off" : "on",
+            { friendly_name: "Delayed light" },
+            reads < 3 ? "2026-08-21T12:00:00.000Z" : "2026-08-21T12:00:01.000Z",
+          ),
+        ]);
+      }),
+    );
+    stubWebSocket(() => ({
+      success: true,
+      result: { context: { id: "context-delayed" } },
+    }));
+
+    const result = await runExecute(
+      {
+        action: "light.turn_on",
+        target: { entity_id: ["light.delayed"] },
+        settle_ms: 300,
+        poll_interval_ms: 100,
+      },
+      config,
+    );
+
+    expect(result).toMatchObject({
+      ok: true,
+      observation: {
+        status: "observed",
+        outcome: "changed",
+        settle_ms: 300,
+        attempts: 2,
+        changed: 1,
+        items: [{ entity_id: "light.delayed", after: { state: "on" } }],
+      },
+    });
+    expect(
+      result.ok === true ? result.observation.waited_ms : 0,
+    ).toBeGreaterThanOrEqual(90);
+    expect(Value.Check(executeOutputSchema, result)).toBe(true);
+  });
+
+  it("distinguishes a completed settle window with no observed change", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        json([
+          state("light.already_on", "on", {
+            friendly_name: "Already-on light",
+          }),
+        ]),
+      ),
+    );
+    stubWebSocket(() => ({
+      success: true,
+      result: { context: { id: "context-no-change" } },
+    }));
+
+    const result = await runExecute(
+      {
+        action: "light.turn_on",
+        target: { entity_id: ["light.already_on"] },
+        settle_ms: 220,
+        poll_interval_ms: 100,
+      },
+      config,
+    );
+
+    expect(result).toMatchObject({
+      ok: true,
+      observation: {
+        status: "observed",
+        outcome: "no_change_observed",
+        settle_ms: 220,
+        changed: 0,
+      },
+    });
+    if (result.ok === true) {
+      expect(result.observation.attempts).toBeGreaterThanOrEqual(3);
+      expect(result.observation.waited_ms).toBeGreaterThanOrEqual(200);
+    }
+    expect(Value.Check(executeOutputSchema, result)).toBe(true);
+  });
+
+  it("cancels an in-progress observation settle window", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => json([state("light.delayed", "off")])),
+    );
+    stubWebSocket(() => ({
+      success: true,
+      result: { context: { id: "context-abort" } },
+    }));
+    const controller = new AbortController();
+    setTimeout(() => controller.abort(), 20);
+
+    const result = await runExecute(
+      {
+        action: "light.turn_on",
+        target: { entity_id: ["light.delayed"] },
+        settle_ms: 1_000,
+        poll_interval_ms: 100,
+      },
+      config,
+      { signal: controller.signal },
+    );
+
+    expect(result).toMatchObject({
+      ok: false,
+      error: { code: "REQUEST_ABORTED" },
     });
     expect(Value.Check(executeOutputSchema, result)).toBe(true);
   });

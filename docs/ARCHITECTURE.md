@@ -40,7 +40,9 @@ Registry availability can vary with Home Assistant version and user permissions.
 
 The operation sends these values through the WebSocket `call_service` command without domain-specific branching or plugin-maintained action lists. Home Assistant performs validation and authorization.
 
-Observation is on by default. Explicit entity targets are observed directly; semantic targets are expanded with `extract_from_target`. The plugin compares bounded state projections before and after the blocking action call and reports changed/unchanged entities. Observation failure does not rewrite a successful action as a failure. Calls without resolvable entity targets report `not_applicable`, and callers can disable observation when the extra state reads are not useful.
+Observation is on by default. Explicit entity targets are observed directly; semantic targets are expanded with `extract_from_target`. After the blocking action call, the plugin reads immediately and then polls only while no state change is visible. It exits early on change or at a bounded settle deadline. The result preserves the existing observation status while adding a `changed` or `no_change_observed` outcome, read-attempt count, and actual wait time.
+
+The default settle window is 1500 ms with 250 ms polling. Operators can configure both values, and each action call can override them. A zero settle window performs one immediate read. Observation failure or a no-change outcome does not rewrite a successful Home Assistant action as a failure. Calls without resolvable entity targets report `not_applicable`, and callers can disable observation when the extra state reads are not useful.
 
 Action response data is requested only when `return_response` is true. Discovery reports whether an action response is absent, optional, or required when Home Assistant supplies that metadata.
 

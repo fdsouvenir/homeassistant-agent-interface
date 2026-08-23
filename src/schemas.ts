@@ -52,6 +52,22 @@ export const configSchema = Type.Object(
       Type.Integer({ minimum: 1, maximum: 720 }),
     ),
     maxHistoryHours: Type.Optional(Type.Integer({ minimum: 1, maximum: 720 })),
+    observationSettleMs: Type.Optional(
+      Type.Integer({
+        minimum: 0,
+        maximum: 10_000,
+        description:
+          "Default post-action observation settle window in milliseconds. Defaults to 1500.",
+      }),
+    ),
+    observationPollMs: Type.Optional(
+      Type.Integer({
+        minimum: 100,
+        maximum: 2_000,
+        description:
+          "Default interval between post-action observation reads in milliseconds. Defaults to 250.",
+      }),
+    ),
   },
   strict,
 );
@@ -554,6 +570,22 @@ export const executeParameters = Type.Object(
           "Compare target entity state before and after the action. Defaults to true.",
       }),
     ),
+    settle_ms: Type.Optional(
+      Type.Integer({
+        minimum: 0,
+        maximum: 10_000,
+        description:
+          "Maximum observation settle window after the action. Defaults to plugin configuration or 1500 ms.",
+      }),
+    ),
+    poll_interval_ms: Type.Optional(
+      Type.Integer({
+        minimum: 100,
+        maximum: 2_000,
+        description:
+          "Delay between observation reads. Defaults to plugin configuration or 250 ms.",
+      }),
+    ),
   },
   strict,
 );
@@ -585,6 +617,15 @@ export const executeOutputSchema = Type.Union([
             Type.Literal("unavailable"),
             Type.Literal("not_applicable"),
           ]),
+          outcome: Type.Optional(
+            Type.Union([
+              Type.Literal("changed"),
+              Type.Literal("no_change_observed"),
+            ]),
+          ),
+          settle_ms: Type.Integer({ minimum: 0 }),
+          waited_ms: Type.Integer({ minimum: 0 }),
+          attempts: Type.Integer({ minimum: 0 }),
           total: Type.Integer({ minimum: 0 }),
           returned: Type.Integer({ minimum: 0 }),
           truncated: Type.Boolean(),
