@@ -1,4 +1,4 @@
-import type { HaState, PluginConfig, UnresolvedTarget } from "./types.js";
+import type { HaState, UnresolvedTarget } from "./types.js";
 import { HomeAssistantClient } from "./client.js";
 import { InterfaceError } from "./errors.js";
 
@@ -10,22 +10,6 @@ export function entityDomain(entityId: string): string {
 
 export function isEntityId(value: string): boolean {
   return ENTITY_ID_PATTERN.test(value);
-}
-
-export function isEntityAllowed(
-  entityId: string,
-  config: PluginConfig,
-): boolean {
-  const entityRules =
-    config.allowedEntities?.map((value) => value.toLowerCase()) ?? [];
-  const domainRules =
-    config.allowedDomains?.map((value) => value.toLowerCase()) ?? [];
-  if (entityRules.length === 0 && domainRules.length === 0) return true;
-  const normalized = entityId.toLowerCase();
-  return (
-    entityRules.includes(normalized) ||
-    domainRules.includes(entityDomain(normalized))
-  );
 }
 
 function friendlyName(state: HaState): string {
@@ -62,7 +46,6 @@ export type ResolvedTargets = {
 async function resolveExactTargets(
   client: HomeAssistantClient,
   targets: string[],
-  config: PluginConfig,
   signal?: AbortSignal,
 ): Promise<ResolvedTargets> {
   const resolved: HaState[] = [];
@@ -70,15 +53,18 @@ async function resolveExactTargets(
   await Promise.all(
     targets.map(async (target) => {
       const normalized = target.toLowerCase();
-      if (!isEntityAllowed(normalized, config)) {
-        unresolved.push({ target, reason: "access_denied" });
-        return;
-      }
       try {
         resolved.push(await client.getState(normalized, signal));
       } catch (error) {
         if (error instanceof InterfaceError && error.code === "NOT_FOUND") {
           unresolved.push({ target, reason: "not_found" });
+          return;
+        }
+        if (
+          error instanceof InterfaceError &&
+          error.code === "UPSTREAM_UNAVAILABLE"
+        ) {
+          unresolved.push({ target, reason: "unavailable" });
           return;
         }
         throw error;
@@ -104,7 +90,6 @@ async function resolveExactTargets(
 export async function resolveTargets(
   client: HomeAssistantClient,
   rawTargets: string[],
-  config: PluginConfig,
   signal?: AbortSignal,
 ): Promise<ResolvedTargets> {
   const targets = [
@@ -120,12 +105,10 @@ export async function resolveTargets(
     );
   }
   if (targets.every((target) => isEntityId(target.toLowerCase()))) {
-    return resolveExactTargets(client, targets, config, signal);
+    return resolveExactTargets(client, targets, signal);
   }
 
-  const states = (await client.getAllStates(signal)).filter((state) =>
-    isEntityAllowed(state.entity_id, config),
-  );
+  const states = await client.getAllStates(signal);
   const resolved: HaState[] = [];
   const unresolved: UnresolvedTarget[] = [];
   const used = new Set<string>();
@@ -176,7 +159,6 @@ export type FindMatch = {
 export function findMatches(
   states: HaState[],
   query: string,
-  config: PluginConfig,
   domains?: string[],
   statesFilter?: string[],
 ): FindMatch[] {
@@ -186,7 +168,6 @@ export function findMatches(
   );
   const normalizedQuery = normalizedWords(query);
   return states
-    .filter((state) => isEntityAllowed(state.entity_id, config))
     .filter(
       (state) =>
         domainSet.size === 0 || domainSet.has(entityDomain(state.entity_id)),

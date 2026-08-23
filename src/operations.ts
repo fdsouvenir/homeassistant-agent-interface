@@ -1,5 +1,7 @@
 import type { Static } from "typebox";
+import { executeAction } from "./actions.js";
 import { HomeAssistantClient } from "./client.js";
+import { discover } from "./discovery.js";
 import { InterfaceError, toolResult } from "./errors.js";
 import {
   attentionForState,
@@ -9,16 +11,12 @@ import {
 import {
   briefParameters,
   diagnoseParameters,
+  executeParameters,
   findParameters,
   inspectParameters,
   presenceParameters,
 } from "./schemas.js";
-import {
-  entityDomain,
-  findMatches,
-  isEntityAllowed,
-  resolveTargets,
-} from "./scope.js";
+import { entityDomain, resolveTargets } from "./scope.js";
 import type {
   ErrorResult,
   HaHistoryState,
@@ -36,6 +34,7 @@ type FindParameters = Static<typeof findParameters>;
 type InspectParameters = Static<typeof inspectParameters>;
 type PresenceParameters = Static<typeof presenceParameters>;
 type DiagnoseParameters = Static<typeof diagnoseParameters>;
+type ExecuteParameters = Static<typeof executeParameters>;
 
 const DEFAULT_BRIEF_ITEMS = 12;
 const DEFAULT_RECENT_MINUTES = 60;
@@ -88,7 +87,6 @@ export async function runBrief(
     const resolution = await resolveTargets(
       client(config),
       targets,
-      config,
       context.signal,
     );
     const entities = resolution.resolved.map((state) =>
@@ -144,14 +142,14 @@ export async function runFind(
   context: ExecutionContext = {},
 ) {
   return toolResult(async () => {
-    const all = await client(config).getAllStates(context.signal);
-    const matches = findMatches(
-      all,
-      params.query,
-      config,
-      params.domains,
-      params.states,
-    );
+    const discovery = await discover(config, {
+      ...(params.query === undefined ? {} : { query: params.query }),
+      ...(params.kinds === undefined ? {} : { kinds: params.kinds }),
+      ...(params.domains === undefined ? {} : { domains: params.domains }),
+      ...(params.states === undefined ? {} : { states: params.states }),
+      ...(context.signal === undefined ? {} : { signal: context.signal }),
+    });
+    const matches = discovery.matches;
     const limit = params.limit ?? 10;
     const offset = params.cursor === undefined ? 0 : Number(params.cursor);
     if (!Number.isSafeInteger(offset) || offset < 0) {
@@ -169,7 +167,12 @@ export async function runFind(
     const nextOffset = offset + page.length;
     return {
       ok: true as const,
-      query: params.query,
+      ...(params.query === undefined ? {} : { query: params.query }),
+      coverage: {
+        partial: discovery.unavailableKinds.length > 0,
+        available_kinds: discovery.availableKinds,
+        unavailable_kinds: discovery.unavailableKinds,
+      },
       total: matches.length,
       returned: page.length,
       truncated: nextOffset < matches.length,
@@ -191,11 +194,10 @@ export async function runInspect(
     const resolution = await resolveTargets(
       client(config),
       params.targets,
-      config,
       context.signal,
     );
     const entities = resolution.resolved.map((state) =>
-      projectState(state, detail),
+      projectState(state, detail, new Date(), params.attribute_keys ?? []),
     );
     return {
       ok: true as const,
@@ -349,11 +351,9 @@ function presenceWindow(
   return { start, end };
 }
 
-function sourceFor(state: HaState, config: PluginConfig): string | undefined {
+function sourceFor(state: HaState): string | undefined {
   const source = state.attributes.source;
-  return typeof source === "string" && isEntityAllowed(source, config)
-    ? source
-    : undefined;
+  return typeof source === "string" ? source : undefined;
 }
 
 export async function runPresence(
@@ -370,7 +370,6 @@ export async function runPresence(
     const resolution = await resolveTargets(
       client(config),
       targets,
-      config,
       context.signal,
     );
     const supported: HaState[] = [];
@@ -407,7 +406,7 @@ export async function runPresence(
         window.end,
         maxTransitions,
       );
-      const source = sourceFor(state, config);
+      const source = sourceFor(state);
       const projection = projectState(state, "summary");
       return {
         entity_id: state.entity_id,
@@ -470,9 +469,7 @@ export async function runDiagnose(
       haClient.getConfig(context.signal),
       haClient.getAllStates(context.signal),
     ]);
-    const states = allStates.filter((state) =>
-      isEntityAllowed(state.entity_id, config),
-    );
+    const states = allStates;
     const domainCounts = new Map<string, number>();
     for (const state of states) {
       const domain = entityDomain(state.entity_id);
@@ -529,4 +526,12 @@ export async function runDiagnose(
       issues: bounded(issues, maxItems),
     };
   });
+}
+
+export async function runExecute(
+  params: ExecuteParameters,
+  config: PluginConfig,
+  context: ExecutionContext = {},
+) {
+  return toolResult(() => executeAction(params, config, context.signal));
 }

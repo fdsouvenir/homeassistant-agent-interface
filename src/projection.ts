@@ -4,6 +4,7 @@ import type {
   HaState,
   JsonPrimitive,
 } from "./types.js";
+import { compactJson } from "./compact.js";
 import { entityDomain } from "./scope.js";
 
 export type DetailLevel = "summary" | "detail" | "full";
@@ -159,11 +160,16 @@ export function projectState(
   state: HaState,
   detail: DetailLevel,
   now: Date = new Date(),
+  attributeKeys: string[] = [],
 ): EntityProjection {
   const changed = Date.parse(state.last_changed);
-  const changedSecondsAgo = Number.isFinite(changed)
-    ? Math.max(0, Math.floor((now.getTime() - changed) / 1000))
-    : 0;
+  if (!Number.isFinite(changed)) {
+    throw new Error(`Invalid last_changed timestamp for ${state.entity_id}`);
+  }
+  const changedSecondsAgo = Math.max(
+    0,
+    Math.floor((now.getTime() - changed) / 1000),
+  );
   const projection: EntityProjection = {
     entity_id: state.entity_id,
     name: friendlyName(state),
@@ -183,6 +189,24 @@ export function projectState(
   domainFacts(state, facts);
   if (detail === "full") fullFacts(state, facts);
   if (facts.length > 0) projection.facts = facts;
+  if (attributeKeys.length > 0) {
+    const attributes: Record<string, unknown> = {};
+    let attributesTruncated = false;
+    for (const key of attributeKeys) {
+      if (Object.hasOwn(state.attributes, key)) {
+        const compacted = compactJson(state.attributes[key], {
+          maxDepth: 4,
+          maxArrayItems: 25,
+          maxObjectKeys: 50,
+          maxStringLength: 1_000,
+        });
+        attributes[key] = compacted.value;
+        attributesTruncated ||= compacted.truncated;
+      }
+    }
+    projection.attributes = attributes;
+    if (attributesTruncated) projection.attributes_truncated = true;
+  }
   return projection;
 }
 

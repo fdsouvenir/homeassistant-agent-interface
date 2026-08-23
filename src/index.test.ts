@@ -12,6 +12,7 @@ describe("Home Assistant Agent Interface plugin", () => {
     expect(metadata?.tools.map((tool) => tool.name)).toEqual([
       "home_assistant_brief",
       "home_assistant_find",
+      "home_assistant_execute",
       "home_assistant_inspect",
       "home_assistant_presence",
       "home_assistant_diagnose",
@@ -19,8 +20,6 @@ describe("Home Assistant Agent Interface plugin", () => {
     expect(
       metadata?.tools.every((tool) => tool.outputSchema !== undefined),
     ).toBe(true);
-    expect(
-      metadata?.tools.filter((tool) => tool.optional).map((tool) => tool.name),
-    ).toEqual(["home_assistant_presence", "home_assistant_diagnose"]);
+    expect(metadata?.tools.some((tool) => tool.optional)).toBe(false);
   });
 });

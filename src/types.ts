@@ -5,8 +5,6 @@ export type PluginConfig = {
   token: string;
   briefEntities?: string[];
   presenceEntities?: string[];
-  allowedEntities?: string[];
-  allowedDomains?: string[];
   requestTimeoutMs?: number;
   maxResponseBytes?: number;
   maxBriefItems?: number;
@@ -86,10 +84,38 @@ export type EntityProjection = {
   changed_seconds_ago: number;
   updated_at?: string;
   facts?: Fact[];
+  attributes?: Record<string, unknown>;
+  attributes_truncated?: boolean;
 };
 
 export type UnresolvedTarget = {
   target: string;
-  reason: "access_denied" | "ambiguous" | "not_found" | "unsupported";
+  reason: "ambiguous" | "not_found" | "unavailable" | "unsupported";
   candidate_entity_ids?: string[];
+};
+
+export type DiscoveryKind =
+  "entity" | "action" | "area" | "device" | "floor" | "label";
+
+export type HaTarget = {
+  entity_id?: string[];
+  device_id?: string[];
+  area_id?: string[];
+  floor_id?: string[];
+  label_id?: string[];
+};
+
+export type WebSocketCommand = {
+  type: string;
+  [key: string]: unknown;
+};
+
+export type SettledCommand =
+  { ok: true; value: unknown } | { ok: false; error: InterfaceErrorShape };
+
+export type InterfaceErrorShape = {
+  code: ErrorCode;
+  message: string;
+  retryable: boolean;
+  recovery?: Recovery;
 };

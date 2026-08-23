@@ -93,4 +93,95 @@ describe("HomeAssistantClient", () => {
         ),
     ).toThrow("cannot contain credentials");
   });
+
+  it("preserves a configured reverse-proxy base path", async () => {
+    const fetchMock = vi.fn(async () => new Response("[]"));
+    const client = new HomeAssistantClient(
+      { ...baseConfig, baseUrl: "https://ha.example.test/remote/ha" },
+      fetchMock as typeof fetch,
+    );
+
+    await client.getAllStates();
+
+    expect(String(fetchMock.mock.calls[0]?.[0])).toBe(
+      "https://ha.example.test/remote/ha/api/states",
+    );
+  });
+
+  it("rejects a streamed response that crosses the byte cap", async () => {
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode('["'));
+        controller.enqueue(new Uint8Array(70_000));
+        controller.close();
+      },
+    });
+    const fetchMock = vi.fn(async () => new Response(stream));
+    const client = new HomeAssistantClient(
+      { ...baseConfig, maxResponseBytes: 65_536 },
+      fetchMock as typeof fetch,
+    );
+
+    await expect(client.getAllStates()).rejects.toMatchObject({
+      code: "RESPONSE_TOO_LARGE",
+    });
+  });
+
+  it("rejects malformed state timestamps instead of reporting fresh state", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            entity_id: "light.example",
+            state: "on",
+            attributes: {},
+            last_changed: "not-a-time",
+          }),
+        ),
+    );
+    const client = new HomeAssistantClient(
+      baseConfig,
+      fetchMock as typeof fetch,
+    );
+
+    await expect(client.getState("light.example")).rejects.toMatchObject({
+      code: "UPSTREAM_INVALID_RESPONSE",
+    });
+  });
+
+  it("rejects malformed history timestamps", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify([[{ state: "home", last_changed: "yesterdayish" }]]),
+        ),
+    );
+    const client = new HomeAssistantClient(
+      baseConfig,
+      fetchMock as typeof fetch,
+    );
+
+    await expect(
+      client.getHistory(
+        ["person.example"],
+        "2026-08-21T00:00:00.000Z",
+        "2026-08-22T00:00:00.000Z",
+      ),
+    ).rejects.toMatchObject({ code: "UPSTREAM_INVALID_RESPONSE" });
+  });
+
+  it("returns a stable cancellation before starting fetch", async () => {
+    const fetchMock = vi.fn();
+    const controller = new AbortController();
+    controller.abort();
+    const client = new HomeAssistantClient(
+      baseConfig,
+      fetchMock as unknown as typeof fetch,
+    );
+
+    await expect(client.getAllStates(controller.signal)).rejects.toMatchObject({
+      code: "REQUEST_ABORTED",
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
 });

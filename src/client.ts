@@ -36,6 +36,34 @@ function optionalString(
   return typeof value === "string" ? value : undefined;
 }
 
+function requiredTimestamp(
+  record: Record<string, unknown>,
+  key: string,
+): string {
+  const value = requiredString(record, key);
+  if (!Number.isFinite(Date.parse(value))) {
+    throw new InterfaceError(
+      "UPSTREAM_INVALID_RESPONSE",
+      `Home Assistant returned an invalid ${key} timestamp.`,
+    );
+  }
+  return value;
+}
+
+function optionalTimestamp(
+  record: Record<string, unknown>,
+  key: string,
+): string | undefined {
+  const value = optionalString(record, key);
+  if (value !== undefined && !Number.isFinite(Date.parse(value))) {
+    throw new InterfaceError(
+      "UPSTREAM_INVALID_RESPONSE",
+      `Home Assistant returned an invalid ${key} timestamp.`,
+    );
+  }
+  return value;
+}
+
 function parseState(value: unknown): HaState {
   const record = asRecord(value);
   if (!record) {
@@ -45,12 +73,12 @@ function parseState(value: unknown): HaState {
     );
   }
   const attributes = asRecord(record.attributes) ?? {};
-  const lastUpdated = optionalString(record, "last_updated");
+  const lastUpdated = optionalTimestamp(record, "last_updated");
   return {
     entity_id: requiredString(record, "entity_id"),
     state: requiredString(record, "state"),
     attributes,
-    last_changed: requiredString(record, "last_changed"),
+    last_changed: requiredTimestamp(record, "last_changed"),
     ...(lastUpdated === undefined ? {} : { last_updated: lastUpdated }),
   };
 }
@@ -64,11 +92,11 @@ function parseHistoryState(value: unknown): HaHistoryState {
     );
   }
   const entityId = optionalString(record, "entity_id");
-  const lastUpdated = optionalString(record, "last_updated");
+  const lastUpdated = optionalTimestamp(record, "last_updated");
   const attributes = asRecord(record.attributes);
   return {
     state: requiredString(record, "state"),
-    last_changed: requiredString(record, "last_changed"),
+    last_changed: requiredTimestamp(record, "last_changed"),
     ...(entityId === undefined ? {} : { entity_id: entityId }),
     ...(lastUpdated === undefined ? {} : { last_updated: lastUpdated }),
     ...(attributes === undefined ? {} : { attributes }),
@@ -242,7 +270,12 @@ export class HomeAssistantClient {
   }
 
   async #getJson(path: string, signal?: AbortSignal): Promise<unknown> {
-    signal?.throwIfAborted();
+    if (signal?.aborted) {
+      throw new InterfaceError(
+        "REQUEST_ABORTED",
+        "Home Assistant request was cancelled.",
+      );
+    }
     const url = new URL(path, this.#baseUrl);
     if (
       url.origin !== this.#baseUrl.origin ||

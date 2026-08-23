@@ -38,20 +38,6 @@ export const configSchema = Type.Object(
           "Presence entity IDs used when home_assistant_presence receives no targets.",
       }),
     ),
-    allowedEntities: Type.Optional(
-      Type.Array(entityId, {
-        maxItems: 500,
-        uniqueItems: true,
-        description: "Optional exact entity allowlist.",
-      }),
-    ),
-    allowedDomains: Type.Optional(
-      Type.Array(Type.String({ pattern: "^[a-z0-9_]+$" }), {
-        maxItems: 100,
-        uniqueItems: true,
-        description: "Optional entity-domain allowlist.",
-      }),
-    ),
     requestTimeoutMs: Type.Optional(
       Type.Integer({ minimum: 1_000, maximum: 60_000 }),
     ),
@@ -138,6 +124,10 @@ export const entityProjectionSchema = Type.Object(
     changed_seconds_ago: Type.Integer({ minimum: 0 }),
     updated_at: Type.Optional(Type.String()),
     facts: Type.Optional(Type.Array(factSchema)),
+    attributes: Type.Optional(
+      Type.Record(Type.String(), Type.Unknown(), { maxProperties: 50 }),
+    ),
+    attributes_truncated: Type.Optional(Type.Boolean()),
   },
   strict,
 );
@@ -146,9 +136,9 @@ export const unresolvedTargetSchema = Type.Object(
   {
     target,
     reason: Type.Union([
-      Type.Literal("access_denied"),
       Type.Literal("ambiguous"),
       Type.Literal("not_found"),
+      Type.Literal("unavailable"),
       Type.Literal("unsupported"),
     ]),
     candidate_entity_ids: Type.Optional(Type.Array(entityId)),
@@ -228,7 +218,20 @@ export const briefOutputSchema = Type.Union([
 
 export const findParameters = Type.Object(
   {
-    query: Type.String({ minLength: 1, maxLength: 200 }),
+    query: Type.Optional(Type.String({ minLength: 1, maxLength: 200 })),
+    kinds: Type.Optional(
+      Type.Array(
+        Type.Union([
+          Type.Literal("entity"),
+          Type.Literal("action"),
+          Type.Literal("area"),
+          Type.Literal("device"),
+          Type.Literal("floor"),
+          Type.Literal("label"),
+        ]),
+        { minItems: 1, maxItems: 6, uniqueItems: true },
+      ),
+    ),
     domains: Type.Optional(
       Type.Array(Type.String({ pattern: "^[a-z0-9_]+$" }), { maxItems: 20 }),
     ),
@@ -241,11 +244,68 @@ export const findParameters = Type.Object(
 
 const findMatchSchema = Type.Object(
   {
-    entity_id: entityId,
+    kind: Type.Union([
+      Type.Literal("entity"),
+      Type.Literal("action"),
+      Type.Literal("area"),
+      Type.Literal("device"),
+      Type.Literal("floor"),
+      Type.Literal("label"),
+    ]),
+    id: Type.String(),
     name: Type.String(),
-    domain: Type.String(),
-    state: Type.String(),
-    matched_on: Type.Union([Type.Literal("entity_id"), Type.Literal("name")]),
+    matched_on: Type.Union([
+      Type.Literal("all"),
+      Type.Literal("id"),
+      Type.Literal("name"),
+      Type.Literal("alias"),
+      Type.Literal("description"),
+    ]),
+    domain: Type.Optional(Type.String()),
+    state: Type.Optional(Type.String()),
+    area_id: Type.Optional(Type.String()),
+    floor_id: Type.Optional(Type.String()),
+    device_id: Type.Optional(Type.String()),
+    description: Type.Optional(Type.String()),
+    aliases: Type.Optional(Type.Array(Type.String())),
+    fields: Type.Optional(Type.Array(Type.String())),
+    field_details: Type.Optional(
+      Type.Array(
+        Type.Object(
+          {
+            name: Type.String(),
+            required: Type.Boolean(),
+            description: Type.Optional(Type.String()),
+            selector: Type.Optional(Type.String()),
+            example: Type.Optional(Type.Unknown()),
+            default: Type.Optional(Type.Unknown()),
+            options: Type.Optional(
+              Type.Array(
+                Type.Union([
+                  Type.String(),
+                  Type.Number(),
+                  Type.Boolean(),
+                  Type.Null(),
+                ]),
+              ),
+            ),
+          },
+          strict,
+        ),
+      ),
+    ),
+    fields_truncated: Type.Optional(Type.Boolean()),
+    target_supported: Type.Optional(Type.Boolean()),
+    response: Type.Optional(
+      Type.Union([
+        Type.Literal("none"),
+        Type.Literal("optional"),
+        Type.Literal("required"),
+      ]),
+    ),
+    manufacturer: Type.Optional(Type.String()),
+    model: Type.Optional(Type.String()),
+    level: Type.Optional(Type.Number()),
   },
   strict,
 );
@@ -254,7 +314,15 @@ export const findOutputSchema = Type.Union([
   Type.Object(
     {
       ok: Type.Literal(true),
-      query: Type.String(),
+      query: Type.Optional(Type.String()),
+      coverage: Type.Object(
+        {
+          partial: Type.Boolean(),
+          available_kinds: Type.Array(Type.String()),
+          unavailable_kinds: Type.Array(Type.String()),
+        },
+        strict,
+      ),
       total: Type.Integer({ minimum: 0 }),
       returned: Type.Integer({ minimum: 0 }),
       truncated: Type.Boolean(),
@@ -279,6 +347,14 @@ export const inspectParameters = Type.Object(
         Type.Literal("detail"),
         Type.Literal("full"),
       ]),
+    ),
+    attribute_keys: Type.Optional(
+      Type.Array(Type.String({ minLength: 1, maxLength: 100 }), {
+        maxItems: 50,
+        uniqueItems: true,
+        description:
+          "Exact Home Assistant attribute names to include when additional context is needed.",
+      }),
     ),
   },
   strict,
@@ -427,6 +503,110 @@ export const diagnoseOutputSchema = Type.Union([
         strict,
       ),
       issues: boundedCollection(attentionItemSchema),
+    },
+    strict,
+  ),
+  errorSchema,
+]);
+
+const targetIdList = Type.Array(Type.String({ minLength: 1, maxLength: 255 }), {
+  minItems: 1,
+  maxItems: 100,
+  uniqueItems: true,
+});
+
+export const haTargetSchema = Type.Object(
+  {
+    entity_id: Type.Optional(
+      Type.Array(entityId, {
+        minItems: 1,
+        maxItems: 100,
+        uniqueItems: true,
+      }),
+    ),
+    device_id: Type.Optional(targetIdList),
+    area_id: Type.Optional(targetIdList),
+    floor_id: Type.Optional(targetIdList),
+    label_id: Type.Optional(targetIdList),
+  },
+  strict,
+);
+
+export const executeParameters = Type.Object(
+  {
+    action: Type.String({
+      minLength: 3,
+      maxLength: 255,
+      pattern: "^[a-z0-9_]+\\.[a-z0-9_]+$",
+      description:
+        "Home Assistant action in domain.action form, discovered with home_assistant_find.",
+    }),
+    target: Type.Optional(haTargetSchema),
+    data: Type.Optional(
+      Type.Record(Type.String({ minLength: 1 }), Type.Unknown(), {
+        maxProperties: 100,
+      }),
+    ),
+    return_response: Type.Optional(Type.Boolean()),
+    observe: Type.Optional(
+      Type.Boolean({
+        description:
+          "Compare target entity state before and after the action. Defaults to true.",
+      }),
+    ),
+  },
+  strict,
+);
+
+const observationItemSchema = Type.Object(
+  {
+    entity_id: entityId,
+    changed: Type.Boolean(),
+    before: Type.Optional(entityProjectionSchema),
+    after: Type.Optional(entityProjectionSchema),
+  },
+  strict,
+);
+
+export const executeOutputSchema = Type.Union([
+  Type.Object(
+    {
+      ok: Type.Literal(true),
+      action: Type.String(),
+      duration_ms: Type.Integer({ minimum: 0 }),
+      target: Type.Optional(haTargetSchema),
+      context_id: Type.Optional(Type.String()),
+      response: Type.Optional(Type.Unknown()),
+      response_truncated: Type.Optional(Type.Boolean()),
+      observation: Type.Object(
+        {
+          status: Type.Union([
+            Type.Literal("observed"),
+            Type.Literal("unavailable"),
+            Type.Literal("not_applicable"),
+          ]),
+          total: Type.Integer({ minimum: 0 }),
+          returned: Type.Integer({ minimum: 0 }),
+          truncated: Type.Boolean(),
+          changed: Type.Integer({ minimum: 0 }),
+          items: Type.Array(observationItemSchema),
+        },
+        strict,
+      ),
+      missing_targets: Type.Array(
+        Type.Object(
+          {
+            kind: Type.Union([
+              Type.Literal("device"),
+              Type.Literal("area"),
+              Type.Literal("floor"),
+              Type.Literal("label"),
+            ]),
+            id: Type.String(),
+          },
+          strict,
+        ),
+      ),
     },
     strict,
   ),

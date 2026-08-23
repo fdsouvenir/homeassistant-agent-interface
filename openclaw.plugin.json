@@ -1,7 +1,7 @@
 {
   "id": "homeassistant-agent-interface",
   "name": "Home Assistant Agent Interface",
-  "description": "Secure, compact Home Assistant context shaped for agent decisions.",
+  "description": "Compact Home Assistant discovery, context, history, and action execution for agents.",
   "version": "0.1.0",
   "configSchema": {
     "type": "object",
@@ -43,28 +43,6 @@
         "maxItems": 25,
         "uniqueItems": true,
         "description": "Presence entity IDs used when home_assistant_presence receives no targets."
-      },
-      "allowedEntities": {
-        "type": "array",
-        "items": {
-          "type": "string",
-          "minLength": 3,
-          "maxLength": 255,
-          "pattern": "^[a-z0-9_]+\\.[a-z0-9_]+$"
-        },
-        "maxItems": 500,
-        "uniqueItems": true,
-        "description": "Optional exact entity allowlist."
-      },
-      "allowedDomains": {
-        "type": "array",
-        "items": {
-          "type": "string",
-          "pattern": "^[a-z0-9_]+$"
-        },
-        "maxItems": 100,
-        "uniqueItems": true,
-        "description": "Optional entity-domain allowlist."
       },
       "requestTimeoutMs": {
         "type": "integer",
@@ -116,6 +94,7 @@
     "tools": [
       "home_assistant_brief",
       "home_assistant_find",
+      "home_assistant_execute",
       "home_assistant_inspect",
       "home_assistant_presence",
       "home_assistant_diagnose"
@@ -136,6 +115,18 @@
     },
     "home_assistant_find": {
       "replaySafe": true,
+      "configSignals": [
+        {
+          "rootPath": "plugins.entries.homeassistant-agent-interface.config",
+          "required": [
+            "baseUrl",
+            "token"
+          ]
+        }
+      ]
+    },
+    "home_assistant_execute": {
+      "replaySafe": false,
       "configSignals": [
         {
           "rootPath": "plugins.entries.homeassistant-agent-interface.config",
@@ -168,11 +159,9 @@
             "token"
           ]
         }
-      ],
-      "optional": true
+      ]
     },
     "home_assistant_diagnose": {
-      "optional": true,
       "replaySafe": true,
       "configSignals": [
         {
