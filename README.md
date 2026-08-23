@@ -1,21 +1,21 @@
 <p align="center">
-  <img src="assets/banner.svg" alt="Home Assistant Agent Interface" width="100%" />
+  <img src="https://raw.githubusercontent.com/fdsouvenir/homeassistant-agent-interface/main/assets/banner.svg" alt="Home Assistant Agent Interface" width="100%" />
 </p>
 
 <p align="center">
   <a href="https://github.com/fdsouvenir/homeassistant-agent-interface/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/fdsouvenir/homeassistant-agent-interface/actions/workflows/ci.yml/badge.svg" /></a>
-  <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-36d399.svg" /></a>
+  <a href="https://github.com/fdsouvenir/homeassistant-agent-interface/blob/main/LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-36d399.svg" /></a>
   <a href="https://docs.openclaw.ai/plugins/tool-plugins"><img alt="OpenClaw 8.1 tool plugin" src="https://img.shields.io/badge/OpenClaw-8.1-7c3aed.svg" /></a>
-  <img alt="Version 0.2 read and control" src="https://img.shields.io/badge/v0.2-read%20%2B%20control-38bdf8.svg" />
+  <img alt="Version 0.3 agent-guided control" src="https://img.shields.io/badge/v0.3-agent--guided%20control-38bdf8.svg" />
 </p>
 
 A token-efficient Home Assistant interface for OpenClaw agents. It gives an agent compact, typed tools to discover the actual installation, understand current state and history, and execute any Home Assistant action available to the configured token.
 
 The design follows [Agent eXperience Interface (AXI)](https://github.com/kunchenguid/axi) principles: semantic lookup, progressive detail, batched work, bounded results, explicit partial coverage, definitive empty results, and errors that help the agent correct its next call.
 
-## What v0.2 provides
+## What v0.3 provides
 
-Version 0.2 adds full action execution and live installation discovery.
+Version 0.3 combines full action execution and live installation discovery with a bundled operating skill that teaches agents how to use the interface efficiently.
 
 - `home_assistant_find` searches entities, actions, areas, devices, floors, and labels from Home Assistant itself.
 - `home_assistant_execute` calls any `domain.action` with native Home Assistant target and data objects.
@@ -23,6 +23,7 @@ Version 0.2 adds full action execution and live installation discovery.
 - Action results include compact before/after observations when target entities can be resolved.
 - Observation reads settle asynchronously: they stop as soon as a change appears or report that no change was observed within the bounded window.
 - Exact dynamic attributes can be requested through `home_assistant_inspect` only when needed.
+- The `home-assistant-interface` skill guides tool selection, discovery, execution, and honest interpretation of partial or asynchronous results.
 - The plugin has no entity allowlist, action allowlist, approval system, or hard-coded household identities.
 
 Home Assistant remains the source of truth for authorization. The plugin attempts the requested operation and Home Assistant permits or rejects it according to the configured user and token.
@@ -37,6 +38,8 @@ Home Assistant remains the source of truth for authorization. The plugin attempt
 | `home_assistant_brief`    | Summarize current state, attention items, presence, and recent changes across explicit or configured entities.                             |
 | `home_assistant_presence` | Summarize current zones, transitions, and time-by-zone over a bounded history window.                                                      |
 | `home_assistant_diagnose` | Check connectivity and summarize instance and entity health.                                                                               |
+
+The bundled skill is an operating guide rather than another API surface. It loads with the enabled plugin, keeps direct control requests action-oriented, and avoids duplicating the tools' schemas in agent context.
 
 ### Typical agent flow
 
@@ -61,18 +64,32 @@ Turn on every compatible light in an area:
 }
 ```
 
-The execution result includes Home Assistant's context ID plus bounded state observations for resolved target entities. The first post-action read happens immediately. If no change is visible, the plugin polls until a change appears or the settle deadline expires. `observation.outcome` distinguishes `changed` from `no_change_observed`, while `attempts` and `waited_ms` make the evidence explicit. A no-change observation does not redefine Home Assistant's successful action response.
+The execution result includes Home Assistant's context ID plus bounded state observations for resolved target entities. The first post-action read happens immediately. If no change is visible, the plugin polls until a change appears or the settle deadline expires. For a multi-entity target, polling stops after the first observed target change, so slower targets may still be converging in the returned snapshot. `observation.outcome` distinguishes `changed` from `no_change_observed`, while `attempts` and `waited_ms` make the evidence explicit. A no-change observation does not redefine Home Assistant's successful action response.
 
 Actions that do not target entities—notifications, conversations, some scripts, and similar operations—return `observation.status: "not_applicable"`. If observation reads fail but Home Assistant accepts the action, the successful action is preserved and observation is reported as unavailable. Per-call `settle_ms` and `poll_interval_ms` values override the configured defaults; setting `settle_ms` to `0` restores a single immediate read.
 
+## Requirements
+
+- OpenClaw 2026.8.1 beta 2 or newer.
+- A supported Node.js runtime: 22.22.3–22.x, 24.15.0–24.x, or 25.9.0 and newer.
+- A reachable Home Assistant instance and a long-lived access token.
+
 ## Install
+
+### From ClawHub
+
+Install the latest reviewed release:
+
+```bash
+openclaw plugins install clawhub:homeassistant-agent-interface
+```
 
 ### From GitHub
 
 Install the released tag:
 
 ```bash
-openclaw plugins install git:github.com/fdsouvenir/homeassistant-agent-interface@v0.2.1
+openclaw plugins install git:github.com/fdsouvenir/homeassistant-agent-interface@v0.3.0
 ```
 
 For local development:
@@ -83,14 +100,6 @@ cd homeassistant-agent-interface
 npm install
 npm run plugin:build
 openclaw plugins install -l .
-```
-
-### From ClawHub
-
-ClawHub publishing is a separate release step. Once a reviewed package is available:
-
-```bash
-openclaw plugins install clawhub:homeassistant-agent-interface
 ```
 
 ## Configure
@@ -164,11 +173,11 @@ The plugin contains no default person, device, area, entity, zone, action, or Ho
 
 This plugin is an interface, not an authorization or household-safety layer. It does not classify actions, request approvals, or restrict entities/actions beyond Home Assistant's own token permissions. If the token can turn on a light, unlock a lock, run a script, or call a custom integration action, the plugin can request it.
 
-Transport behavior is deliberately disciplined because failures and oversized results are bad agent interfaces: requests use the configured origin and base path, redirects are disabled for REST, cancellation and timeouts propagate, inbound data is capped, upstream shapes are checked, and credentials are never logged. See [the operational model](docs/SECURITY-MODEL.md).
+Transport behavior is deliberately disciplined because failures and oversized results are bad agent interfaces: requests use the configured origin and base path, redirects are disabled for REST, cancellation and timeouts propagate, inbound data is capped, upstream shapes are checked, and credentials are never logged. See [the operational model](https://github.com/fdsouvenir/homeassistant-agent-interface/blob/main/docs/SECURITY-MODEL.md).
 
 ## Development
 
-Requires Node 22.22.3+ and the OpenClaw 8.1 plugin API.
+Requires Node 22.22.3–22.x, 24.15.0–24.x, or 25.9.0+ and the OpenClaw 8.1 plugin API.
 
 ```bash
 npm install
@@ -181,10 +190,10 @@ npm pack --dry-run
 
 Authoring commands use an isolated temporary OpenClaw state directory. They do not read or migrate the normal Gateway configuration.
 
-See [Architecture](docs/ARCHITECTURE.md), [Publishing](docs/PUBLISHING.md), and [Contributing](CONTRIBUTING.md).
+See [Architecture](https://github.com/fdsouvenir/homeassistant-agent-interface/blob/main/docs/ARCHITECTURE.md), [Publishing](https://github.com/fdsouvenir/homeassistant-agent-interface/blob/main/docs/PUBLISHING.md), and [Contributing](https://github.com/fdsouvenir/homeassistant-agent-interface/blob/main/CONTRIBUTING.md).
 
 Home Assistant is a trademark of the Open Home Foundation. This community project is not affiliated with or endorsed by the Open Home Foundation or OpenClaw.
 
 ## License
 
-[MIT](LICENSE)
+[MIT](https://github.com/fdsouvenir/homeassistant-agent-interface/blob/main/LICENSE)

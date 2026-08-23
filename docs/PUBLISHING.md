@@ -9,10 +9,24 @@ The package is structured for GitHub and ClawHub distribution. GitHub releases a
 3. Run `npm ci` from a clean checkout.
 4. Run `npm run check` and `npm run plugin:validate`.
 5. Run `npm run clawhub:validate` and review its report.
-6. Run `npm pack --dry-run`; confirm only intended runtime and documentation files ship.
-7. Inspect the packed tarball or install it through `npm-pack:` in an isolated OpenClaw profile.
+6. Create the release artifact with `npm pack`; confirm only intended runtime, skill, asset, and documentation files ship.
+7. Install that exact tarball through `npm-pack:` in an isolated OpenClaw profile. Confirm the plugin runtime and bundled skills are discovered.
 8. Tag the exact commit and create a GitHub release.
-9. When ClawHub publication is explicitly approved, publish the tagged GitHub source with `clawhub package publish fdsouvenir/homeassistant-agent-interface@<tag> --dry-run`, then without `--dry-run` after reviewing the plan.
-10. Wait for ClawHub security review before advertising the install locator.
+9. When ClawHub publication is explicitly approved, publish the exact tested tarball with provenance for the tagged source:
+
+   ```bash
+   clawhub package publish ./homeassistant-agent-interface-<version>.tgz \
+     --family code-plugin \
+     --owner fdsouvenir \
+     --source-repo fdsouvenir/homeassistant-agent-interface \
+     --source-commit <commit> \
+     --source-ref v<version> \
+     --tags latest \
+     --dry-run
+   ```
+
+   Review the preview, then repeat the same command without `--dry-run`. Do not publish this repository through the GitHub-source mode: `dist/` is generated and intentionally absent from Git, so that preview does not contain a runnable artifact.
+
+10. Wait for ClawHub security review, then inspect, download, and run the readiness check against the published version before advertising the install locator.
 
 Never publish from a dirty worktree or from an untagged branch head.
