@@ -4,6 +4,19 @@ All notable changes will be documented here. This project follows [Semantic Vers
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-08-23
+
+### Added
+
+- Official support for the current OpenClaw stable channel starting at 2026.7.1-2.
+- Packed-artifact compatibility checks for stable and 2026.8.1 beta 2, including six-tool registration, bundled-skill presence, and version-specific output-schema behavior.
+- A GitHub Actions compatibility matrix that exercises both supported host lines independently.
+
+### Changed
+
+- Installation, peer dependency, and plugin API metadata now admit stable OpenClaw hosts.
+- Documentation distinguishes the complete stable tool interface from the additional host-visible output schemas available on 2026.8.1 beta 2 and newer.
+
 ## [0.3.1] - 2026-08-23
 
 ### Changed
@@ -66,7 +79,8 @@ All notable changes will be documented here. This project follows [Semantic Vers
 - SecretRef declaration, configured-origin binding, redirect blocking, timeouts, byte caps, and optional exposure scopes.
 - Neutral tests, public documentation, CI, and ClawHub package metadata.
 
-[Unreleased]: https://github.com/fdsouvenir/homeassistant-agent-interface/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/fdsouvenir/homeassistant-agent-interface/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/fdsouvenir/homeassistant-agent-interface/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/fdsouvenir/homeassistant-agent-interface/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/fdsouvenir/homeassistant-agent-interface/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/fdsouvenir/homeassistant-agent-interface/compare/v0.2.0...v0.2.1
