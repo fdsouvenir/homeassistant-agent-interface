@@ -20,7 +20,8 @@ npm install
 npm run plugin:build
 npm run plugin:validate
 npm test
+npm run compat
 npm run check
 ```
 
-Please add tests for behavior and output-schema compatibility. Pull requests should explain the agent workflow improved and its token/round-trip impact.
+Please add tests for behavior and output-schema compatibility. `npm run compat` builds and packs once per target, then verifies the artifact against stable and beta OpenClaw SDK behavior. Pull requests should explain the agent workflow improved and its token/round-trip impact.

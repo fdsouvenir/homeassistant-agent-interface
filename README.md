@@ -5,7 +5,7 @@
 <p align="center">
   <a href="https://github.com/fdsouvenir/homeassistant-agent-interface/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/fdsouvenir/homeassistant-agent-interface/actions/workflows/ci.yml/badge.svg" /></a>
   <a href="https://github.com/fdsouvenir/homeassistant-agent-interface/blob/main/LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-36d399.svg" /></a>
-  <a href="https://docs.openclaw.ai/plugins/tool-plugins"><img alt="OpenClaw 8.1 tool plugin" src="https://img.shields.io/badge/OpenClaw-8.1-7c3aed.svg" /></a>
+  <a href="https://docs.openclaw.ai/plugins/tool-plugins"><img alt="OpenClaw 7.1 or newer" src="https://img.shields.io/badge/OpenClaw-7.1%2B-7c3aed.svg" /></a>
   <img alt="Version 0.3 agent-guided control" src="https://img.shields.io/badge/v0.3-agent--guided%20control-38bdf8.svg" />
 </p>
 
@@ -20,9 +20,9 @@ Six compact tools replace raw Home Assistant state dumps and repeated API calls.
 
 The design follows [Agent eXperience Interface (AXI)](https://github.com/kunchenguid/axi) principles: semantic lookup, progressive detail, batched work, bounded results, explicit partial coverage, definitive empty results, and errors that help the agent correct its next call.
 
-## What v0.3 provides
+## What it provides
 
-Version 0.3 combines full action execution and live installation discovery with a bundled operating skill that teaches agents how to use the interface efficiently.
+The plugin combines full action execution and live installation discovery with a bundled operating skill that teaches agents how to use the interface efficiently.
 
 - `home_assistant_find` searches entities, actions, areas, devices, floors, and labels from Home Assistant itself.
 - `home_assistant_execute` calls any `domain.action` with native Home Assistant target and data objects.
@@ -77,9 +77,18 @@ Actions that do not target entities—notifications, conversations, some scripts
 
 ## Requirements
 
-- OpenClaw 2026.8.1 beta 2 or newer.
+- OpenClaw 2026.7.1-2 or newer.
 - A supported Node.js runtime: 22.22.3–22.x, 24.15.0–24.x, or 25.9.0 and newer.
 - A reachable Home Assistant instance and a long-lived access token.
+
+### OpenClaw compatibility
+
+| Host                       | Supported interface                                                                                                  |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| 2026.7.1-2 stable or newer | All six tools, bundled skill, structured JSON results, discovery, control, history, and settled action observations. |
+| 2026.8.1 beta 2 or newer   | The same interface, plus host-visible `outputSchema` declarations for result validation and richer tool metadata.    |
+
+The plugin is built with the 2026.8.1 beta 2 SDK and runtime-tested as a packed artifact against both host lines. Stable OpenClaw does not expose the newer output-schema field, but the result objects and plugin behavior are otherwise identical.
 
 ## Install
 
@@ -167,7 +176,7 @@ The plugin contains no default person, device, area, entity, zone, action, or Ho
 
 ## Agent-facing contract
 
-- Every tool returns typed JSON and declares an OpenClaw `outputSchema`.
+- Every tool returns the same typed JSON on supported hosts; OpenClaw 2026.8.1 beta 2 and newer also receive the declared `outputSchema`.
 - Success is explicit with `ok: true`; expected failures use `ok: false` with a stable code and focused recovery metadata.
 - Collections report `total`, `returned`, and `truncated` where bounding matters.
 - Discovery reports `coverage.partial`, `available_kinds`, and `unavailable_kinds`; a failed registry cannot masquerade as an authoritative empty result.
@@ -184,13 +193,14 @@ Transport behavior is deliberately disciplined because failures and oversized re
 
 ## Development
 
-Requires Node 22.22.3–22.x, 24.15.0–24.x, or 25.9.0+ and the OpenClaw 8.1 plugin API.
+Requires Node 22.22.3–22.x, 24.15.0–24.x, or 25.9.0+. Authoring uses the OpenClaw 2026.8.1 beta 2 SDK; compatibility tests exercise the packed artifact on both 2026.7.1-2 stable and 2026.8.1 beta 2.
 
 ```bash
 npm install
 npm run plugin:build
 npm run plugin:validate
 npm test
+npm run compat
 npm run check
 npm pack --dry-run
 ```

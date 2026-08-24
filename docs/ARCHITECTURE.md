@@ -1,6 +1,6 @@
 # Architecture
 
-Home Assistant Agent Interface is an OpenClaw 8.1 tool plugin that translates a live Home Assistant installation into compact agent operations. It is intentionally not a one-tool-per-domain wrapper: discovery comes from Home Assistant, targets use Home Assistant's native model, and one execution tool can call current and future integration actions without plugin releases.
+Home Assistant Agent Interface is an OpenClaw tool plugin that translates a live Home Assistant installation into compact agent operations. It is intentionally not a one-tool-per-domain wrapper: discovery comes from Home Assistant, targets use Home Assistant's native model, and one execution tool can call current and future integration actions without plugin releases.
 
 ## Request path
 
@@ -9,7 +9,7 @@ Home Assistant Agent Interface is an OpenClaw 8.1 tool plugin that translates a 
 3. REST handles state, history, and instance reads; the authenticated WebSocket API handles catalogs, target expansion, and action calls.
 4. Parsers validate the upstream shape and convert expected failures into stable agent-facing errors.
 5. Projection code returns compact state facts, aggregates, pagination, coverage, and truncation metadata.
-6. OpenClaw validates the structured result against the declared output schema.
+6. The plugin returns the documented structured result. OpenClaw 2026.8.1 beta 2 and newer additionally validate it against the declared output schema.
 
 The Home Assistant token is the authority boundary. There is no second entity/action policy inside the plugin.
 
@@ -64,16 +64,17 @@ Action response data is requested only when `return_response` is true. Discovery
 
 `home_assistant_diagnose` combines a small instance projection with aggregate entity health and attention items. It is an interface diagnostic, not a Home Assistant configuration or log browser.
 
-## OpenClaw 8.1 contracts
+## OpenClaw compatibility contracts
 
 - `defineToolPlugin` is the runtime entry contract.
 - `contracts.tools` is generated from static tool metadata.
-- every tool declares a closed `outputSchema`;
+- every tool declares a closed `outputSchema`; 2026.7.1-2 stable ignores this newer field while preserving the same structured result;
 - `activation.onStartup` is `false` for lazy, tool-owned activation;
 - `home_assistant_execute` is explicitly not replay-safe because arbitrary Home Assistant actions may be non-idempotent;
 - configuration signals identify `baseUrl` and `token`;
 - `configContracts.secretInputs` declares `token` for SecretRef materialization;
-- `openclaw.compat.pluginApi` and build provenance target OpenClaw 2026.8.1 beta 2.
+- `openclaw.compat.pluginApi` and the installation floor target OpenClaw 2026.7.1-2;
+- build provenance targets the 2026.8.1 beta 2 SDK, and the packed artifact is tested against both versions.
 
 ## AXI interpretation
 
