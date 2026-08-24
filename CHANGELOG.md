@@ -4,6 +4,8 @@ All notable changes will be documented here. This project follows [Semantic Vers
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-08-24
+
 ### Fixed
 
 - Canonical OpenClaw SecretRef objects now pass plugin configuration validation on stable and beta hosts instead of being rejected as non-string tokens before materialization.
@@ -94,7 +96,8 @@ All notable changes will be documented here. This project follows [Semantic Vers
 - SecretRef declaration, configured-origin binding, redirect blocking, timeouts, byte caps, and optional exposure scopes.
 - Neutral tests, public documentation, CI, and ClawHub package metadata.
 
-[Unreleased]: https://github.com/fdsouvenir/homeassistant-agent-interface/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/fdsouvenir/homeassistant-agent-interface/compare/v0.4.2...HEAD
+[0.4.2]: https://github.com/fdsouvenir/homeassistant-agent-interface/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/fdsouvenir/homeassistant-agent-interface/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/fdsouvenir/homeassistant-agent-interface/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/fdsouvenir/homeassistant-agent-interface/compare/v0.3.0...v0.3.1
