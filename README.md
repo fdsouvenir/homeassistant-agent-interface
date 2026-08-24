@@ -6,7 +6,7 @@
   <a href="https://github.com/fdsouvenir/homeassistant-agent-interface/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/fdsouvenir/homeassistant-agent-interface/actions/workflows/ci.yml/badge.svg" /></a>
   <a href="https://github.com/fdsouvenir/homeassistant-agent-interface/blob/main/LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-36d399.svg" /></a>
   <a href="https://docs.openclaw.ai/plugins/tool-plugins"><img alt="OpenClaw 7.1 or newer" src="https://img.shields.io/badge/OpenClaw-7.1%2B-7c3aed.svg" /></a>
-  <img alt="Version 0.4.2 stable and beta support" src="https://img.shields.io/badge/v0.4.2-stable%20%2B%20beta-38bdf8.svg" />
+  <img alt="Version 0.4.3 stable and beta support" src="https://img.shields.io/badge/v0.4.3-stable%20%2B%20beta-38bdf8.svg" />
 </p>
 
 Six compact tools replace raw Home Assistant state dumps and repeated API calls. They let an OpenClaw agent discover the actual installation, understand current state and history, and execute any Home Assistant action available to the configured token.
@@ -116,7 +116,7 @@ openclaw plugins install clawhub:homeassistant-agent-interface
 Install the released tag:
 
 ```bash
-openclaw plugins install git:github.com/fdsouvenir/homeassistant-agent-interface@v0.4.2
+openclaw plugins install git:github.com/fdsouvenir/homeassistant-agent-interface@v0.4.3
 ```
 
 For local development:
