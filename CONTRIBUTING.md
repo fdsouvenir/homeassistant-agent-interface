@@ -24,4 +24,4 @@ npm run compat
 npm run check
 ```
 
-Please add tests for behavior and output-schema compatibility. `npm run compat` builds and packs once per target, then verifies the artifact against stable and beta OpenClaw SDK behavior. Pull requests should explain the agent workflow improved and its token/round-trip impact.
+Please add tests for behavior and output-schema compatibility. `npm run compat` builds and packs once per target, installs the artifact into isolated stable and beta OpenClaw profiles, configures a canonical SecretRef, and invokes a tool through each real gateway. Pull requests should explain the agent workflow improved and its token/round-trip impact.

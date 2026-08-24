@@ -4,6 +4,15 @@ All notable changes will be documented here. This project follows [Semantic Vers
 
 ## [Unreleased]
 
+### Fixed
+
+- Canonical OpenClaw SecretRef objects now pass plugin configuration validation on stable and beta hosts instead of being rejected as non-string tokens before materialization.
+- Compatibility tests now exercise the real host configuration and gateway path, proving that the stored token remains a reference and resolves into the expected Home Assistant bearer credential at runtime.
+
+### Changed
+
+- Build provenance and beta compatibility coverage now target OpenClaw 2026.8.1 beta 3, including its `store` SecretRef source.
+
 ## [0.4.1] - 2026-08-23
 
 ### Fixed

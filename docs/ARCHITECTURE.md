@@ -72,9 +72,9 @@ Action response data is requested only when `return_response` is true. Discovery
 - `activation.onStartup` is `false` for lazy, tool-owned activation;
 - `home_assistant_execute` is explicitly not replay-safe because arbitrary Home Assistant actions may be non-idempotent;
 - configuration signals identify `baseUrl` and `token`;
-- `configContracts.secretInputs` declares `token` for SecretRef materialization;
+- `configContracts.secretInputs` declares `token` for SecretRef materialization, while the generated configuration schema admits both non-empty strings and exact canonical SecretRef objects;
 - `openclaw.compat.pluginApi` and the installation floor target OpenClaw 2026.7.1-2;
-- build provenance targets the 2026.8.1 beta 2 SDK, and the packed artifact is tested against both versions.
+- build provenance targets the 2026.8.1 beta 3 SDK, and the packed artifact is installed and exercised through real isolated gateways on both versions.
 
 ## AXI interpretation
 

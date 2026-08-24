@@ -12,8 +12,124 @@
         "description": "Home Assistant base URL."
       },
       "token": {
-        "type": "string",
-        "minLength": 1,
+        "anyOf": [
+          {
+            "type": "string",
+            "minLength": 1
+          },
+          {
+            "anyOf": [
+              {
+                "type": "object",
+                "required": [
+                  "source",
+                  "provider",
+                  "id"
+                ],
+                "properties": {
+                  "source": {
+                    "type": "string",
+                    "const": "env"
+                  },
+                  "provider": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                  },
+                  "id": {
+                    "type": "string",
+                    "pattern": "^[A-Z][A-Z0-9_]{0,127}$"
+                  }
+                },
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "required": [
+                  "source",
+                  "provider",
+                  "id"
+                ],
+                "properties": {
+                  "source": {
+                    "type": "string",
+                    "const": "file"
+                  },
+                  "provider": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                  },
+                  "id": {
+                    "type": "string",
+                    "anyOf": [
+                      {
+                        "const": "value"
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "pattern": "^/"
+                          },
+                          {
+                            "not": {
+                              "pattern": "~(?:[^01]|$)"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "required": [
+                  "source",
+                  "provider",
+                  "id"
+                ],
+                "properties": {
+                  "source": {
+                    "type": "string",
+                    "const": "exec"
+                  },
+                  "provider": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                  },
+                  "id": {
+                    "type": "string",
+                    "pattern": "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._:/#-]{0,255}$"
+                  }
+                },
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "required": [
+                  "source",
+                  "provider",
+                  "id"
+                ],
+                "properties": {
+                  "source": {
+                    "type": "string",
+                    "const": "store"
+                  },
+                  "provider": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                  },
+                  "id": {
+                    "type": "string",
+                    "pattern": "^[A-Z][A-Z0-9_]{0,127}$"
+                  }
+                },
+                "additionalProperties": false
+              }
+            ]
+          }
+        ],
         "description": "Home Assistant access token or SecretRef."
       },
       "briefEntities": {

@@ -1,6 +1,62 @@
 import { Type } from "typebox";
 
 const strict = { additionalProperties: false } as const;
+const secretProviderAlias = Type.String({
+  pattern: "^[a-z][a-z0-9_-]{0,63}$",
+});
+const envSecretId = Type.String({ pattern: "^[A-Z][A-Z0-9_]{0,127}$" });
+const fileSecretId = Type.Unsafe<string>({
+  type: "string",
+  anyOf: [
+    { const: "value" },
+    {
+      allOf: [{ pattern: "^/" }, { not: { pattern: "~(?:[^01]|$)" } }],
+    },
+  ],
+});
+const execSecretId = Type.String({
+  pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._:/#-]{0,255}$",
+});
+export const secretRefSchema = Type.Union([
+  Type.Object(
+    {
+      source: Type.Literal("env"),
+      provider: secretProviderAlias,
+      id: envSecretId,
+    },
+    strict,
+  ),
+  Type.Object(
+    {
+      source: Type.Literal("file"),
+      provider: secretProviderAlias,
+      id: fileSecretId,
+    },
+    strict,
+  ),
+  Type.Object(
+    {
+      source: Type.Literal("exec"),
+      provider: secretProviderAlias,
+      id: execSecretId,
+    },
+    strict,
+  ),
+  Type.Object(
+    {
+      source: Type.Literal("store"),
+      provider: secretProviderAlias,
+      id: envSecretId,
+    },
+    strict,
+  ),
+]);
+export const secretInputSchema = Type.Union(
+  [Type.String({ minLength: 1 }), secretRefSchema],
+  {
+    description: "Home Assistant access token or SecretRef.",
+  },
+);
 const entityId = Type.String({
   minLength: 3,
   maxLength: 255,
@@ -22,12 +78,7 @@ export const configSchema = Type.Object(
         description: "Home Assistant base URL.",
       }),
     ),
-    token: Type.Optional(
-      Type.String({
-        minLength: 1,
-        description: "Home Assistant access token or SecretRef.",
-      }),
-    ),
+    token: Type.Optional(secretInputSchema),
     briefEntities: Type.Optional(
       Type.Array(entityId, {
         maxItems: 25,

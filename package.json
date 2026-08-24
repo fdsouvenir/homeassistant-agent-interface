@@ -72,7 +72,7 @@
   "devDependencies": {
     "@types/node": "^24.3.0",
     "clawhub": "^0.23.3",
-    "openclaw": "2026.8.1-beta.2",
+    "openclaw": "2026.8.1-beta.3",
     "prettier": "^3.6.2",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4"
@@ -90,8 +90,8 @@
       "pluginApi": ">=2026.7.1-2"
     },
     "build": {
-      "openclawVersion": "2026.8.1-beta.2",
-      "pluginSdkVersion": "2026.8.1-beta.2"
+      "openclawVersion": "2026.8.1-beta.3",
+      "pluginSdkVersion": "2026.8.1-beta.3"
     },
     "release": {
       "publishToClawHub": true

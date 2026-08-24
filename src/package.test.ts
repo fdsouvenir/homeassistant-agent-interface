@@ -1,4 +1,6 @@
 import { readFile } from "node:fs/promises";
+import type { TSchema } from "typebox";
+import { Check } from "typebox/value";
 import { describe, expect, it } from "vitest";
 
 const root = new URL("../", import.meta.url);
@@ -50,8 +52,8 @@ describe("published plugin package", () => {
     expect(openclaw.install.minHostVersion).toBe(">=2026.7.1-2");
     expect(openclaw.compat.pluginApi).toBe(">=2026.7.1-2");
     expect(openclaw.build).toMatchObject({
-      openclawVersion: "2026.8.1-beta.2",
-      pluginSdkVersion: "2026.8.1-beta.2",
+      openclawVersion: "2026.8.1-beta.3",
+      pluginSdkVersion: "2026.8.1-beta.3",
     });
   });
 
@@ -64,6 +66,15 @@ describe("published plugin package", () => {
     >;
 
     expect(configSchema.required).toBeUndefined();
+    expect(
+      Check(configSchema as TSchema, {
+        token: {
+          source: "exec",
+          provider: "keepassxc",
+          id: "home-assistant/token",
+        },
+      }),
+    ).toBe(true);
     for (const metadata of Object.values(toolMetadata)) {
       expect(metadata.configSignals[0]?.required).toEqual(["baseUrl", "token"]);
     }

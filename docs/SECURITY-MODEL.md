@@ -11,7 +11,8 @@ Choose the Home Assistant user and token according to the authority you want the
 ## Credentials
 
 - The generated manifest declares `token` in `configContracts.secretInputs`.
-- Configuration accepts OpenClaw SecretRefs.
+- Configuration accepts exact canonical OpenClaw `env`, `file`, and `exec` SecretRefs, plus the `store` source introduced in the 2026.8.1 beta line.
+- OpenClaw retains the reference in its configuration and materializes it before plugin registration; the plugin defensively rejects a missing, unresolved, or non-string runtime value.
 - The token is sent only as a REST bearer credential or WebSocket authentication message.
 - The plugin has no configuration logging and does not place the token in errors or results.
 

@@ -1,8 +1,10 @@
+import type { SecretInput } from "openclaw/plugin-sdk/secret-input";
+
 export type JsonPrimitive = string | number | boolean | null;
 
 export type PluginConfig = {
   baseUrl?: string;
-  token?: string;
+  token?: SecretInput;
   briefEntities?: string[];
   presenceEntities?: string[];
   requestTimeoutMs?: number;

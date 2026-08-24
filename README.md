@@ -86,9 +86,9 @@ Actions that do not target entities—notifications, conversations, some scripts
 | Host                       | Supported interface                                                                                                  |
 | -------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | 2026.7.1-2 stable or newer | All six tools, bundled skill, structured JSON results, discovery, control, history, and settled action observations. |
-| 2026.8.1 beta 2 or newer   | The same interface, plus host-visible `outputSchema` declarations for result validation and richer tool metadata.    |
+| 2026.8.1 beta 3 or newer   | The same interface, plus host-visible `outputSchema` declarations for result validation and richer tool metadata.    |
 
-The plugin is built with the 2026.8.1 beta 2 SDK and runtime-tested as a packed artifact against both host lines. Stable OpenClaw does not expose the newer output-schema field, but the result objects and plugin behavior are otherwise identical.
+The plugin is built with the 2026.8.1 beta 3 SDK and runtime-tested as a packed artifact against both host lines. Stable OpenClaw does not expose the newer output-schema field, but the result objects and plugin behavior are otherwise identical.
 
 ## Install
 
@@ -121,6 +121,17 @@ openclaw plugins install -l .
 ## Configure
 
 Create a Home Assistant long-lived access token for the user whose permissions the agent should have. Prefer an OpenClaw SecretRef so the token does not need to be stored directly in `openclaw.json`.
+
+Configure an environment-backed SecretRef through OpenClaw's CLI:
+
+```bash
+openclaw config set plugins.entries.homeassistant-agent-interface.config.token \
+  --ref-source env \
+  --ref-provider default \
+  --ref-id HOME_ASSISTANT_TOKEN
+```
+
+The plugin schema accepts either a non-empty plaintext token or a canonical SecretRef object. OpenClaw stable supports `env`, `file`, and `exec` SecretRefs; 2026.8.1 beta 3 additionally supports `store`. OpenClaw retains the reference in configuration and materializes it before plugin registration. If a configured provider cannot resolve the reference, plugin loading fails instead of silently falling back to plaintext.
 
 ```json5
 {
@@ -176,7 +187,7 @@ The plugin contains no default person, device, area, entity, zone, action, or Ho
 
 ## Agent-facing contract
 
-- Every tool returns the same typed JSON on supported hosts; OpenClaw 2026.8.1 beta 2 and newer also receive the declared `outputSchema`.
+- Every tool returns the same typed JSON on supported hosts; OpenClaw 2026.8.1 beta 3 and newer also receive the declared `outputSchema`.
 - Success is explicit with `ok: true`; expected failures use `ok: false` with a stable code and focused recovery metadata.
 - Collections report `total`, `returned`, and `truncated` where bounding matters.
 - Discovery reports `coverage.partial`, `available_kinds`, and `unavailable_kinds`; a failed registry cannot masquerade as an authoritative empty result.
@@ -193,7 +204,7 @@ Transport behavior is deliberately disciplined because failures and oversized re
 
 ## Development
 
-Requires Node 22.22.3–22.x, 24.15.0–24.x, or 25.9.0+. Authoring uses the OpenClaw 2026.8.1 beta 2 SDK; compatibility tests exercise the packed artifact on both 2026.7.1-2 stable and 2026.8.1 beta 2.
+Requires Node 22.22.3–22.x, 24.15.0–24.x, or 25.9.0+. Authoring uses the OpenClaw 2026.8.1 beta 3 SDK; compatibility tests install the packed artifact in isolated 2026.7.1-2 stable and 2026.8.1 beta 3 profiles, configure a canonical SecretRef, and invoke a tool through each real gateway.
 
 ```bash
 npm install
