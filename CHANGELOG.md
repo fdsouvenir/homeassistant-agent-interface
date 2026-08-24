@@ -4,6 +4,8 @@ All notable changes will be documented here. This project follows [Semantic Vers
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-08-23
+
 ### Fixed
 
 - Fresh installation on OpenClaw stable no longer fails validation before Home Assistant configuration can be supplied. The plugin remains inactive until `baseUrl` and `token` are configured, and tool execution still returns `CONFIG_REQUIRED` when either value is absent.
@@ -83,7 +85,8 @@ All notable changes will be documented here. This project follows [Semantic Vers
 - SecretRef declaration, configured-origin binding, redirect blocking, timeouts, byte caps, and optional exposure scopes.
 - Neutral tests, public documentation, CI, and ClawHub package metadata.
 
-[Unreleased]: https://github.com/fdsouvenir/homeassistant-agent-interface/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/fdsouvenir/homeassistant-agent-interface/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/fdsouvenir/homeassistant-agent-interface/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/fdsouvenir/homeassistant-agent-interface/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/fdsouvenir/homeassistant-agent-interface/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/fdsouvenir/homeassistant-agent-interface/compare/v0.2.1...v0.3.0
