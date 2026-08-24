@@ -33,4 +33,25 @@ describe("published plugin package", () => {
       expect(skill).toContain(`\`${tool}\``);
     }
   });
+
+  it("supports stable hosts while building enhanced schemas with beta", async () => {
+    const packageJson = await readJson("package.json");
+    const peerDependencies = packageJson.peerDependencies as Record<
+      string,
+      unknown
+    >;
+    const openclaw = packageJson.openclaw as {
+      build: Record<string, unknown>;
+      compat: Record<string, unknown>;
+      install: Record<string, unknown>;
+    };
+
+    expect(peerDependencies.openclaw).toBe(">=2026.7.1-2");
+    expect(openclaw.install.minHostVersion).toBe(">=2026.7.1-2");
+    expect(openclaw.compat.pluginApi).toBe(">=2026.7.1-2");
+    expect(openclaw.build).toMatchObject({
+      openclawVersion: "2026.8.1-beta.2",
+      pluginSdkVersion: "2026.8.1-beta.2",
+    });
+  });
 });

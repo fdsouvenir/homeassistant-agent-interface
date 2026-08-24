@@ -50,6 +50,9 @@
     "plugin:check": "npm run build && node ./scripts/openclaw-isolated.mjs plugins build --entry ./dist/index.js --check",
     "plugin:validate": "npm run build && node ./scripts/openclaw-isolated.mjs plugins validate --entry ./dist/index.js",
     "clawhub:validate": "clawhub package validate . --out .clawhub-validation",
+    "compat": "npm run compat:stable && npm run compat:beta",
+    "compat:stable": "npm run build && node ./scripts/check-openclaw-compat.mjs stable",
+    "compat:beta": "npm run build && node ./scripts/check-openclaw-compat.mjs beta",
     "check:privacy": "node ./scripts/check-privacy.mjs",
     "check": "npm run format:check && npm run check:privacy && npm run plugin:check && npm test",
     "test": "vitest run --config ./vitest.config.ts",
@@ -59,7 +62,7 @@
     "typebox": "^1.1.38"
   },
   "peerDependencies": {
-    "openclaw": ">=2026.8.1-beta.2"
+    "openclaw": ">=2026.7.1-2"
   },
   "peerDependenciesMeta": {
     "openclaw": {
@@ -81,10 +84,10 @@
     "install": {
       "clawhubSpec": "clawhub:homeassistant-agent-interface",
       "defaultChoice": "clawhub",
-      "minHostVersion": ">=2026.8.1-beta.2"
+      "minHostVersion": ">=2026.7.1-2"
     },
     "compat": {
-      "pluginApi": ">=2026.8.1-beta.2"
+      "pluginApi": ">=2026.7.1-2"
     },
     "build": {
       "openclawVersion": "2026.8.1-beta.2",
