@@ -4,6 +4,11 @@ All notable changes will be documented here. This project follows [Semantic Vers
 
 ## [Unreleased]
 
+### Changed
+
+- The marketplace README now presents recent release highlights near the top and links to the complete version history and GitHub releases.
+- Published artifacts now include `CHANGELOG.md` so installed and downloaded packages retain their release history.
+
 ## [0.4.2] - 2026-08-24
 
 ### Fixed

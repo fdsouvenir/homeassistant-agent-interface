@@ -36,6 +36,7 @@
     "assets/banner.svg",
     "openclaw.plugin.json",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE"
   ],
   "engines": {

@@ -20,6 +20,17 @@ Six compact tools replace raw Home Assistant state dumps and repeated API calls.
 
 The design follows [Agent eXperience Interface (AXI)](https://github.com/kunchenguid/axi) principles: semantic lookup, progressive detail, batched work, bounded results, explicit partial coverage, definitive empty results, and errors that help the agent correct its next call.
 
+## Changelog
+
+### Recent releases
+
+- [v0.4.3](https://github.com/fdsouvenir/homeassistant-agent-interface/releases/tag/v0.4.3) — Makes release history visible on the marketplace listing and ships the complete changelog inside the package.
+- [v0.4.2](https://github.com/fdsouvenir/homeassistant-agent-interface/releases/tag/v0.4.2) — Accepts canonical SecretRef credentials on stable and beta hosts, with real gateway-level regression coverage.
+- [v0.4.1](https://github.com/fdsouvenir/homeassistant-agent-interface/releases/tag/v0.4.1) — Allows fresh stable installation before Home Assistant credentials are configured.
+- [v0.4.0](https://github.com/fdsouvenir/homeassistant-agent-interface/releases/tag/v0.4.0) — Adds stable OpenClaw support and packed-artifact compatibility testing across stable and beta.
+
+[Read the complete changelog](https://github.com/fdsouvenir/homeassistant-agent-interface/blob/main/CHANGELOG.md) or [browse every GitHub release](https://github.com/fdsouvenir/homeassistant-agent-interface/releases). The published package also includes `CHANGELOG.md` for offline inspection.
+
 ## What it provides
 
 The plugin combines full action execution and live installation discovery with a bundled operating skill that teaches agents how to use the interface efficiently.

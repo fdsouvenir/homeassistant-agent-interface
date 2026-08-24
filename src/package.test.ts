@@ -22,7 +22,12 @@ describe("published plugin package", () => {
     );
 
     expect(manifest.skills).toEqual(["./skills"]);
-    expect(packageJson.files).toEqual(expect.arrayContaining(["skills"]));
+    expect(packageJson.files).toEqual(
+      expect.arrayContaining(["skills", "CHANGELOG.md"]),
+    );
+    expect(await readFile(new URL("CHANGELOG.md", root), "utf8")).toContain(
+      "# Changelog",
+    );
     expect(skill).toContain("name: home-assistant-interface");
     for (const tool of [
       "home_assistant_brief",
