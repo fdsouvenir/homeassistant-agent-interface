@@ -8,6 +8,15 @@ const baseConfig = {
 };
 
 describe("HomeAssistantClient", () => {
+  it("reports missing initial configuration at execution time", () => {
+    expect(() => new HomeAssistantClient({}, vi.fn() as typeof fetch)).toThrow(
+      expect.objectContaining({
+        code: "CONFIG_REQUIRED",
+        recovery: { action: "configure_plugin", fields: ["baseUrl"] },
+      }),
+    );
+  });
+
   it("binds requests to the configured origin and disables redirects", async () => {
     const fetchMock = vi.fn(
       async () =>

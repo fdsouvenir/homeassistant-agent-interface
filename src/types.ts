@@ -1,8 +1,8 @@
 export type JsonPrimitive = string | number | boolean | null;
 
 export type PluginConfig = {
-  baseUrl: string;
-  token: string;
+  baseUrl?: string;
+  token?: string;
   briefEntities?: string[];
   presenceEntities?: string[];
   requestTimeoutMs?: number;

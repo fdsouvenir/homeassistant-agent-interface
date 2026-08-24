@@ -52,6 +52,15 @@ function authenticatedFactory(
 }
 
 describe("HomeAssistantWebSocketClient", () => {
+  it("reports missing initial configuration at execution time", () => {
+    expect(() => new HomeAssistantWebSocketClient({})).toThrow(
+      expect.objectContaining({
+        code: "CONFIG_REQUIRED",
+        recovery: { action: "configure_plugin", fields: ["baseUrl"] },
+      }),
+    );
+  });
+
   it("uses the configured base path and batches authenticated commands", async () => {
     const urls: string[] = [];
     const client = new HomeAssistantWebSocketClient(

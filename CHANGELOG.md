@@ -4,6 +4,10 @@ All notable changes will be documented here. This project follows [Semantic Vers
 
 ## [Unreleased]
 
+### Fixed
+
+- Fresh installation on OpenClaw stable no longer fails validation before Home Assistant configuration can be supplied. The plugin remains inactive until `baseUrl` and `token` are configured, and tool execution still returns `CONFIG_REQUIRED` when either value is absent.
+
 ## [0.4.0] - 2026-08-23
 
 ### Added

@@ -54,4 +54,18 @@ describe("published plugin package", () => {
       pluginSdkVersion: "2026.8.1-beta.2",
     });
   });
+
+  it("allows installation before required Home Assistant settings are supplied", async () => {
+    const manifest = await readJson("openclaw.plugin.json");
+    const configSchema = manifest.configSchema as Record<string, unknown>;
+    const toolMetadata = manifest.toolMetadata as Record<
+      string,
+      { configSignals: Array<{ required: string[] }> }
+    >;
+
+    expect(configSchema.required).toBeUndefined();
+    for (const metadata of Object.values(toolMetadata)) {
+      expect(metadata.configSignals[0]?.required).toEqual(["baseUrl", "token"]);
+    }
+  });
 });

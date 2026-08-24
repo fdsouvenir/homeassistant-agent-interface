@@ -14,14 +14,20 @@ const stringList = Type.Array(Type.String({ minLength: 1, maxLength: 255 }), {
 
 export const configSchema = Type.Object(
   {
-    baseUrl: Type.String({
-      minLength: 1,
-      description: "Home Assistant base URL.",
-    }),
-    token: Type.String({
-      minLength: 1,
-      description: "Home Assistant access token or SecretRef.",
-    }),
+    // Keep initial installation valid before the user supplies credentials.
+    // Tool execution still rejects either missing value with CONFIG_REQUIRED.
+    baseUrl: Type.Optional(
+      Type.String({
+        minLength: 1,
+        description: "Home Assistant base URL.",
+      }),
+    ),
+    token: Type.Optional(
+      Type.String({
+        minLength: 1,
+        description: "Home Assistant access token or SecretRef.",
+      }),
+    ),
     briefEntities: Type.Optional(
       Type.Array(entityId, {
         maxItems: 25,
