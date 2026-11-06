@@ -71,12 +71,12 @@
     }
   },
   "devDependencies": {
-    "@types/node": "^24.3.0",
-    "clawhub": "^0.23.3",
-    "openclaw": "2026.8.1-beta.3",
-    "prettier": "^3.6.2",
-    "typescript": "^5.9.2",
-    "vitest": "^3.2.4"
+    "@types/node": "^26.6.6",
+    "clawhub": "^0.25.0",
+    "openclaw": "2026.10.10",
+    "prettier": "^3.9.10",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
   },
   "openclaw": {
     "extensions": [
